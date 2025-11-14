@@ -3,15 +3,20 @@ import 'package:get/get.dart';
 import '../controllers/home_controller.dart';
 import '../../../data/services/auth_service.dart';
 
-class HomeView extends GetView<HomeController> {
+// Import model 'LaundryService' diperlukan untuk type safety di _buildServiceList
+import '../../../data/models/laundry_service_model.dart';
 
+// <-- 1. IMPORT BARU UNTUK NAVIGASI HALAMAN
+import '../../../routes/app_routes.dart';
+
+class HomeView extends GetView<HomeController> {
   const HomeView({Key? key}) : super(key: key);
 
   // --- PALET WARNA BARU ---
   static const Color primaryTeal = Color(0xFF1E5B53);
   static const Color accentTeal = Color(0xFF388E3C);
   static const Color lightBackground = Color(0xFFF0F0F0);
-  
+
   // --- DATA (Konstanta untuk Keringkasan Kode) ---
   static const List<Map<String, dynamic>> _categories = [
     {'name': 'Laundry', 'icon': Icons.local_laundry_service, 'color': primaryTeal},
@@ -26,14 +31,15 @@ class HomeView extends GetView<HomeController> {
       backgroundColor: lightBackground,
       appBar: AppBar(
         // Menghilangkan AppBar bawaan untuk fokus pada header kustom
-        toolbarHeight: 0, 
+        toolbarHeight: 0,
         elevation: 0,
         backgroundColor: lightBackground,
       ),
       body: Obx(
         () {
           if (controller.isLoading.value) {
-            return const Center(child: CircularProgressIndicator(color: primaryTeal));
+            return const Center(
+                child: CircularProgressIndicator(color: primaryTeal));
           }
           if (controller.errorMessage.value.isNotEmpty) {
             return _buildErrorState();
@@ -57,14 +63,18 @@ class HomeView extends GetView<HomeController> {
                   );
                 }),
                 const SizedBox(height: 12),
-                _buildServiceList(controller.services.take(3).toList()),
+                // Kita cast ke List<LaundryService> untuk keamanan
+                _buildServiceList(controller.services
+                    .take(3)
+                    .toList()
+                    .cast<LaundryService>()),
                 const SizedBox(height: 100),
               ],
             ),
           );
         },
       ),
-      // Menggunakan Bottom Navigation Bar baru
+      // Menggunakan Bottom Navigation Bar (TETAP UTUH, 4 TOMBOL)
       bottomNavigationBar: _buildBottomNav(),
     );
   }
@@ -115,21 +125,41 @@ class HomeView extends GetView<HomeController> {
                 ),
                 Row(
                   children: [
-                    const Icon(Icons.notifications_none, color: primaryTeal, size: 24),
-                    const SizedBox(width: 10),
+                    // --- Tombol Notifikasi (Asli) ---
+                    const Icon(Icons.notifications_none,
+                        color: primaryTeal, size: 24),
+                    
+                    // <-- 2. TOMBOL FAVORIT (BARU) DITAMBAHKAN DI SINI -->
+                    const SizedBox(width: 10), // Jarak
+                    GestureDetector(
+                      onTap: () {
+                        // Pindah ke Halaman Favorit
+                        Get.toNamed(Routes.FAVORITES);
+                      },
+                      child: const Icon(
+                        Icons.favorite_border, // Ikon Hati (Outline)
+                        color: primaryTeal,
+                        size: 24,
+                      ),
+                    ),
+                    // <-- AKHIR DARI TOMBOL FAVORIT -->
+
+                    const SizedBox(width: 10), // Jarak
+                    
+                    // --- Tombol Profil (Asli) ---
                     GestureDetector(
                       onTap: () => _showLogoutDialog(context),
                       child: Container(
-                      width: 35,
-                      height: 35,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(10),
-                        color: Colors.grey.shade300,
+                        width: 35,
+                        height: 35,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(10),
+                          color: Colors.grey.shade300,
+                        ),
+                        // Placeholder untuk gambar profil
+                        child: const Icon(Icons.person, color: primaryTeal),
                       ),
-                      // Placeholder untuk gambar profil
-                      child: const Icon(Icons.person, color: primaryTeal),
-                    ), 
-                    )           
+                    )
                   ],
                 ),
               ],
@@ -165,7 +195,8 @@ class HomeView extends GetView<HomeController> {
           Container(
             height: 180,
             width: double.infinity,
-            margin: const EdgeInsets.only(top: 10, left: 20, right: 20, bottom: 20),
+            margin:
+                const EdgeInsets.only(top: 10, left: 20, right: 20, bottom: 20),
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
               color: primaryTeal,
@@ -273,7 +304,8 @@ class HomeView extends GetView<HomeController> {
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
       child: GridView.builder(
         shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(), // Penting agar bisa di-scroll oleh SingleChildScrollView
+        physics:
+            const NeverScrollableScrollPhysics(), // Penting agar bisa di-scroll oleh SingleChildScrollView
         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: 2, // 2 kolom
           crossAxisSpacing: 15,
@@ -326,7 +358,8 @@ class HomeView extends GetView<HomeController> {
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
-                const Icon(Icons.keyboard_arrow_right, color: Colors.grey, size: 20),
+                const Icon(Icons.keyboard_arrow_right,
+                    color: Colors.grey, size: 20),
               ],
             ),
           );
@@ -337,14 +370,15 @@ class HomeView extends GetView<HomeController> {
 
   // --- WIDGET SERVICE POPULER (Best Seller diubah namanya) ---
 
-  Widget _buildServiceList(List<dynamic> services) {
+  // Saya ubah List<dynamic> menjadi List<LaundryService> agar lebih aman
+  Widget _buildServiceList(List<LaundryService> services) {
     if (services.isEmpty) {
       return const Padding(
         padding: EdgeInsets.symmetric(horizontal: 20),
         child: Text('Tidak ada layanan yang tersedia.'),
       );
     }
-    
+
     // Warna diubah agar lebih kontras dengan tema baru
     final colors = [
       const Color(0xFFF9AA33), // Oranye
@@ -374,8 +408,10 @@ class HomeView extends GetView<HomeController> {
                 ),
               ],
             ),
+            // Stack sangat penting agar kita bisa menumpuk tombol favorit
             child: Stack(
               children: [
+                // --- KODE ASLI ANDA (AMAN) ---
                 Padding(
                   padding: const EdgeInsets.all(12),
                   child: Column(
@@ -404,21 +440,50 @@ class HomeView extends GetView<HomeController> {
                     ],
                   ),
                 ),
+                
+                // --- KODE DISKON ASLI ANDA (AMAN) ---
                 if (service.discount != null)
                   Positioned(
                     top: 10,
                     right: 10,
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 6, vertical: 2),
                       decoration: BoxDecoration(
                         color: Colors.red.shade600,
                         borderRadius: BorderRadius.circular(6),
                       ),
-                      child: Text(service.discount,
+                      // Kita tambahkan '!' karena kita sudah cek null
+                      child: Text(service.discount!, 
                           style: const TextStyle(
-                              color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
+                              color: Colors.white,
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold)),
                     ),
                   ),
+
+                // --- [ KODE FAVORIT (SUDAH DIPERBAIKI) ] ---
+                Positioned(
+                  bottom: 8,
+                  right: 8,
+                  child: Obx(() {
+                    
+                    // Menggunakan 'service.id' yang BENAR
+                    final isFav = controller.isFavorite(service.id); 
+                    
+                    return IconButton(
+                      icon: Icon(
+                        isFav ? Icons.favorite : Icons.favorite_border,
+                        color: Colors.white,
+                        size: 24,
+                      ),
+                      onPressed: () {
+                        // Memanggil controller dengan 'service'
+                        controller.toggleFavorite(service);
+                      },
+                    );
+                  }),
+                ),
               ],
             ),
           );
@@ -427,10 +492,10 @@ class HomeView extends GetView<HomeController> {
     );
   }
 
-
-  // --- WIDGET BOTTOM NAVIGASI (Perbaikan Error GetX) ---
+  // --- WIDGET BOTTOM NAVIGASI (KEMBALI KE 4 TOMBOL ASLI) ---
 
   Widget _buildBottomNav() {
+    // Tombol kembali ke 4 item, tidak ada 'Favorit' di sini
     final List<Map<String, dynamic>> navItems = [
       {'icon': Icons.home_rounded, 'label': 'Home', 'index': 0},
       {'icon': Icons.calendar_today_outlined, 'label': 'Booking', 'index': 1},
@@ -465,6 +530,7 @@ class HomeView extends GetView<HomeController> {
                 final isActive = controller.currentIndex.value == index;
 
                 return GestureDetector(
+                  // Logika onTap kembali seperti semula
                   onTap: () {
                     controller.changeIndex(index);
 
@@ -478,8 +544,8 @@ class HomeView extends GetView<HomeController> {
                           behavior: SnackBarBehavior.floating,
                           shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(8)),
-                          margin:
-                              const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                          margin: const EdgeInsets.symmetric(
+                              horizontal: 10, vertical: 10),
                         ),
                       );
                     }
@@ -487,10 +553,13 @@ class HomeView extends GetView<HomeController> {
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 300),
                     curve: Curves.easeInOut,
-                    padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 6),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 15, vertical: 6),
                     decoration: BoxDecoration(
                       // Gaya aktif item yang menarik
-                      color: isActive ? primaryTeal.withOpacity(0.15) : Colors.transparent,
+                      color: isActive
+                          ? primaryTeal.withOpacity(0.15)
+                          : Colors.transparent,
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Column(
@@ -508,7 +577,8 @@ class HomeView extends GetView<HomeController> {
                           style: TextStyle(
                             fontSize: 10,
                             color: isActive ? primaryTeal : Colors.grey.shade600,
-                            fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
+                            fontWeight:
+                                isActive ? FontWeight.bold : FontWeight.normal,
                           ),
                         ),
                       ],
