@@ -46,7 +46,8 @@ class AuthService extends GetxService {
 
       //cek jika user ada pada database
       if(response.user != null) {
-        await _prefs.setBool('isLoggedIn', true);
+        // PERBAIKAN: Menghapus penyimpanan SharedPreferences yang REDUNDAN dan berpotensi memblokir I/O thread.
+        // await _prefs.setBool('isLoggedIn', true); // BARIS INI DIHAPUS
         return true;
       }
       // jika tidak ada
@@ -64,7 +65,8 @@ class AuthService extends GetxService {
   // Placeholder: Logika Sign Out
   Future<void> signOut() async {
     await _supabaseClient.auth.signOut();
-    await _prefs.setBool('isLoggedIn', false);
+    // PERBAIKAN: Menghapus penyimpanan SharedPreferences yang REDUNDAN.
+    // await _prefs.setBool('isLoggedIn', false); // BARIS INI DIHAPUS
     Get.offAllNamed('/login');
   }
   

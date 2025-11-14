@@ -27,26 +27,50 @@ class LoginController extends GetxController {
       final email = emailController.text.trim();
       final password = passwordController.text;
 
+      // 1. Pengecekan Input Lokal (Sinkronus)
       if (email.isEmpty || password.isEmpty) {
-        Get.snackbar('Error', 'Email and password must not be empty.',
-            snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.red.shade400, colorText: Colors.white);
+        Get.snackbar(
+          'Error', 
+          'Email dan password harus diisi.',
+          snackPosition: SnackPosition.BOTTOM, 
+          backgroundColor: Colors.red.shade400, 
+          colorText: Colors.white
+        );
+        isLoading.value = false; // <<< KUNCI ANTI-FREEZE SINKRONUS
         return;
       }
       
+      // 2. Pengecekan Database (Asinkronus)
       final success = await _authService.signIn(email, password);
 
       if (success) {
-        Get.offAllNamed(Routes.HOME); // Redirect ke Home
+        // ✅ Sukses: Redirect ke Home
+        Get.offAllNamed(Routes.HOME); 
       } else {
-        Get.snackbar('Login Failed', 'Invalid credentials or network error. Try user@test.com/password',
-            snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.red.shade400, colorText: Colors.white);
+        // ❌ Gagal Kredensial: Tampilkan pesan & RESET LOADING
+        Get.snackbar(
+          'Login Gagal', 
+          'Email atau password salah. Coba user@test.com/password',
+          snackPosition: SnackPosition.BOTTOM, 
+          backgroundColor: Colors.red.shade400, 
+          colorText: Colors.white,
+          duration: const Duration(seconds: 4)
+        );
+        isLoading.value = false; // <<< KUNCI ANTI-FREEZE ASINKRONUS (Gagal Login)
       }
     } catch (e) {
-      Get.snackbar('Error', 'An unexpected error occurred.',
-          snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.red.shade400, colorText: Colors.white);
-    } finally {
-      isLoading.value = false;
-    }
+      // ⚠️ Gagal Jaringan/Lainnya: Tampilkan pesan & RESET LOADING
+      Get.snackbar(
+        'Error Koneksi', 
+        'Gagal terhubung ke server. Periksa koneksi internet Anda.',
+        snackPosition: SnackPosition.BOTTOM, 
+        backgroundColor: Colors.red.shade700, 
+        colorText: Colors.white,
+        duration: const Duration(seconds: 5) 
+      );
+      isLoading.value = false; // <<< KUNCI ANTI-FREEZE ASINKRONUS (Gagal Jaringan)
+    } 
+    // BLOK finally YANG RUMIT TELAH DIHAPUS.
   }
 
   void goToRegister() {

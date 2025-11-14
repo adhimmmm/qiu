@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controllers/home_controller.dart';
+import '../../../data/services/auth_service.dart';
 
 class HomeView extends GetView<HomeController> {
+
   const HomeView({Key? key}) : super(key: key);
 
   // --- PALET WARNA BARU ---
@@ -40,7 +42,7 @@ class HomeView extends GetView<HomeController> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildHeader(),
+                _buildHeader(context),
                 const SizedBox(height: 20),
                 _buildSectionTitle('Service Categories'),
                 _buildCategories(),
@@ -89,7 +91,7 @@ class HomeView extends GetView<HomeController> {
   }
 
   // Header yang menggabungkan Location, Search, dan Hero Banner (diadaptasi dari gambar)
-  Widget _buildHeader() {
+  Widget _buildHeader(BuildContext context) {
     return Container(
       color: lightBackground,
       child: Column(
@@ -115,7 +117,9 @@ class HomeView extends GetView<HomeController> {
                   children: [
                     const Icon(Icons.notifications_none, color: primaryTeal, size: 24),
                     const SizedBox(width: 10),
-                    Container(
+                    GestureDetector(
+                      onTap: () => _showLogoutDialog(context),
+                      child: Container(
                       width: 35,
                       height: 35,
                       decoration: BoxDecoration(
@@ -124,7 +128,8 @@ class HomeView extends GetView<HomeController> {
                       ),
                       // Placeholder untuk gambar profil
                       child: const Icon(Icons.person, color: primaryTeal),
-                    ),
+                    ), 
+                    )           
                   ],
                 ),
               ],
@@ -198,6 +203,30 @@ class HomeView extends GetView<HomeController> {
           ),
         ],
       ),
+    );
+  }
+
+  // <<< FUNGSI BARU UNTUK MENAMPILKAN DIALOG LOGOUT
+  void _showLogoutDialog(BuildContext context) {
+    Get.defaultDialog(
+      title: 'Logout',
+      middleText: 'Apakah Anda yakin ingin keluar dari akun ini?',
+      confirmTextColor: Colors.white,
+      cancelTextColor: primaryTeal,
+      buttonColor: primaryTeal,
+      onConfirm: () {
+        Get.back(); // Tutup dialog sebelum logout
+        controller.logout(); // Panggil fungsi logout dari controller
+      },
+      onCancel: () {
+        // Hanya menutup dialog jika dibatalkan
+        Get.back();
+      },
+      textConfirm: 'Logout',
+      textCancel: 'Batal',
+      radius: 15.0,
+      titleStyle: const TextStyle(fontWeight: FontWeight.bold, color: primaryTeal),
+      middleTextStyle: const TextStyle(color: Colors.black87),
     );
   }
 

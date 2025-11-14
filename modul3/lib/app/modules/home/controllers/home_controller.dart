@@ -1,8 +1,10 @@
 import 'package:get/get.dart';
 import '../../../data/models/laundry_service_model.dart';
 import '../../../data/services/dio_service.dart';
+import '../../../data/services/auth_service.dart';
 
 class HomeController extends GetxController {
+  final AuthService _authService = Get.find<AuthService>();
   final DioService _dioService = DioService();
 
   final isLoading = false.obs;
@@ -19,6 +21,18 @@ class HomeController extends GetxController {
 
   void changeIndex(int index) {
     currentIndex.value = index;
+  }
+
+  //fungsi logout
+  Future<void> logout() async {
+    isLoading.value = true;
+    try {
+      await _authService.signOut();
+    }catch (e) {
+      print('Error during logout: $e');
+    } finally {
+      isLoading.value = false;
+    }
   }
 
   Future<void> fetchServices() async {
