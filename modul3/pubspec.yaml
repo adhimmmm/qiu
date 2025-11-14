@@ -1,0 +1,41 @@
+name: laundry_app
+description: "Laundry App with GetX - HTTP vs Dio Experiment"
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.9.2
+
+# File: pubspec.yaml
+
+dependencies:
+  flutter:
+    sdk: flutter
+  
+  # State Management
+  get: ^4.6.6
+  
+  # HTTP Libraries
+  http: ^1.2.0
+  dio: ^5.4.0
+  
+  # Local Storage & Database 
+  shared_preferences: ^2.2.3
+  hive: ^2.2.3         # <--- WAJIB ADA
+  hive_flutter: ^1.1.0 # <--- HARUS ADA
+  supabase_flutter: ^2.5.5
+  
+  # UI
+  cupertino_icons: ^1.0.8
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+  # Code generation for Hive
+  hive_generator: ^2.0.1
+  build_runner: ^2.4.9
+
+flutter:
+  uses-material-design: true
