@@ -1,18 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controllers/login_controller.dart';
-import '../../home/views/home_view.dart';
 
 class LoginView extends GetView<LoginController> {
   const LoginView({super.key});
 
-  static const Color primaryTeal = HomeView.primaryTeal;
-  static const Color accentTeal = HomeView.accentTeal;
-
   @override
   Widget build(BuildContext context) {
+    // Ambil warna dari theme
+    final primaryColor = Theme.of(context).primaryColor;
+    final secondaryColor = Theme.of(context).colorScheme.secondary;
+    
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(30.0),
@@ -24,7 +24,7 @@ class LoginView extends GetView<LoginController> {
                 Icon(
                   Icons.local_laundry_service,
                   size: 100,
-                  color: primaryTeal,
+                  color: primaryColor,
                 ),
                 const SizedBox(height: 10),
 
@@ -33,7 +33,7 @@ class LoginView extends GetView<LoginController> {
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
-                    color: primaryTeal,
+                    color: primaryColor,
                   ),
                 ),
 
@@ -50,9 +50,10 @@ class LoginView extends GetView<LoginController> {
                 TextField(
                   controller: controller.emailController,
                   keyboardType: TextInputType.emailAddress,
+                  style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color),
                   decoration: InputDecoration(
                     labelText: 'Email',
-                    prefixIcon: Icon(Icons.email, color: primaryTeal),
+                    prefixIcon: Icon(Icons.email, color: primaryColor),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10),
                     ),
@@ -64,9 +65,10 @@ class LoginView extends GetView<LoginController> {
                 TextField(
                   controller: controller.passwordController,
                   obscureText: controller.isPasswordHidden.value,
+                  style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color),
                   decoration: InputDecoration(
                     labelText: 'Password',
-                    prefixIcon: Icon(Icons.lock, color: primaryTeal),
+                    prefixIcon: Icon(Icons.lock, color: primaryColor),
                     suffixIcon: IconButton(
                       icon: Icon(
                         controller.isPasswordHidden.value
@@ -95,7 +97,7 @@ class LoginView extends GetView<LoginController> {
                         ? controller.register
                         : controller.login,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: primaryTeal,
+                      backgroundColor: primaryColor,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10),
                       ),
@@ -124,7 +126,7 @@ class LoginView extends GetView<LoginController> {
                     controller.isRegisterMode.value
                         ? 'Already have an account? Sign In'
                         : 'Don\'t have an account? Sign Up',
-                    style: TextStyle(color: accentTeal),
+                    style: TextStyle(color: secondaryColor),
                   ),
                 ),
               ],

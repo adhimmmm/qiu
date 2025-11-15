@@ -12,10 +12,14 @@ import '../../../data/services/favorite_service.dart';
 // ROLE
 import '../../../data/models/user_role.dart';
 
+// THEME
+import '../../../data/services/theme_service.dart';
+
 class HomeController extends GetxController {
   final AuthService _authService = Get.find<AuthService>();
   final DioService _dioService = DioService();
   final FavoriteService favoriteService = Get.find<FavoriteService>();
+  final ThemeService _themeService = Get.find<ThemeService>();
 
   /// UI state
   final isLoading = false.obs;
@@ -31,6 +35,15 @@ class HomeController extends GetxController {
     super.onInit();
     fetchUserRole();
     fetchServices();
+  }
+
+  // =========================
+  // THEME / DARK MODE
+  // =========================
+  bool get isDarkMode => _themeService.isDarkMode.value;
+
+  void toggleTheme() {
+    _themeService.toggleTheme();
   }
 
   // =========================
@@ -94,10 +107,8 @@ class HomeController extends GetxController {
         // Mapping data dari DIO dan tandai fromApi = true
         dioServices = dioData.map((json) {
           if (json is LaundryService) {
-            // Jika sudah LaundryService, copy dengan fromApi = true
             return json.copyWith(fromApi: true);
           } else {
-            // Jika masih Map, parse dengan fromApi = true
             return LaundryService.fromJson(
               json as Map<String, dynamic>,
               fromApi: true,
@@ -122,7 +133,7 @@ class HomeController extends GetxController {
       }
 
       if (supabaseList.isEmpty) {
-        print("⚠️ WARNING: Supabase mengembalikan list KOSONG");
+        print("⚠ WARNING: Supabase mengembalikan list KOSONG");
       }
 
       // Mapping data dari Supabase dengan fromApi = false (default)

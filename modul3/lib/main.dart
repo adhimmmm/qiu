@@ -4,33 +4,35 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'app/routes/app_pages.dart';
 import 'app/data/services/auth_service.dart';
 
-// <-- BARU: Import model dan service untuk fitur favorit
+// Import model dan service untuk fitur favorit
 import 'app/data/models/favorite_product_model.dart';
 import 'app/data/services/favorite_service.dart';
 
-// Fungsi untuk inisialisasi layanan asinkronus (Hive, Supabase, shared_preferences)
+// Import theme service untuk dark mode
+import 'app/data/services/theme_service.dart';
+
+// Fungsi untuk inisialisasi layanan asinkronus
 Future<void> initServices() async {
-  // Inisialisasi Hive (Penyimpanan lokal terstruktur)
+  // Inisialisasi Hive
   await Hive.initFlutter();
 
-  // <-- BARU: Daftarkan adapter Hive Anda
-  // Ini harus dilakukan setelah initFlutter() dan sebelum membuka box
+  // Daftarkan adapter Hive
   Hive.registerAdapter(FavoriteProductModelAdapter());
 
-  // Inisialisasi AuthService (Termasuk shared_preferences dan placeholder Supabase)
-  // Get.putAsync digunakan untuk inisialisasi asinkronus dan dependency injection
+  // Inisialisasi AuthService
   await Get.putAsync(() => AuthService().init());
 
-  // <-- BARU: Inisialisasi FavoriteService Anda
-  // Ini akan membuka 'favorites' box dan memuat data
+  // Inisialisasi FavoriteService
   await Get.putAsync(() => FavoriteService().init());
+
+  // Inisialisasi ThemeService (Dark Mode)
+  await Get.putAsync(() => ThemeService().init());
 
   // Placeholder untuk inisialisasi Supabase
   // await Supabase.initialize(url: 'YOUR_SUPABASE_URL', anonKey: 'YOUR_SUPABASE_ANON_KEY');
 }
 
 void main() async {
-  // Wajib dipanggil sebelum memanggil kode native/asinkronus (misalnya: Hive.initFlutter())
   WidgetsFlutterBinding.ensureInitialized();
 
   // Inisialisasi semua layanan penting
@@ -53,14 +55,15 @@ class LaundryApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GetMaterialApp(
-      title: 'Laundry App - HTTP Experiments',
+      title: 'Laundry App',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-        scaffoldBackgroundColor: Colors.white,
-        useMaterial3: true,
-      ),
-      initialRoute: initialRoute, // Gunakan rute yang sudah ditentukan
+      
+      // Theme configuration
+      theme: lightTheme(),
+      darkTheme: darkTheme(),
+      themeMode: Get.find<ThemeService>().themeMode,
+      
+      initialRoute: initialRoute,
       getPages: AppPages.routes,
     );
   }
