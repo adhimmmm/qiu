@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controllers/home_controller.dart';
-import '../../../data/services/auth_service.dart';
 import '../../../data/models/laundry_service_model.dart';
 import '../../../data/models/user_role.dart';
 import '../../../routes/app_routes.dart';
@@ -167,7 +166,7 @@ class HomeView extends GetView<HomeController> {
                     ),
                     const SizedBox(width: 10),
                     GestureDetector(
-                      onTap: () => _showLogoutDialog(context),
+                      onTap: () => Get.toNamed(Routes.PROFILE),
                       child: Container(
                         width: 35,
                         height: 35,
@@ -277,32 +276,6 @@ class HomeView extends GetView<HomeController> {
           ),
         ],
       ),
-    );
-  }
-
-  void _showLogoutDialog(BuildContext context) {
-    Get.defaultDialog(
-      title: 'Logout',
-      middleText: 'Apakah Anda yakin ingin keluar dari akun ini?',
-      confirmTextColor: Colors.white,
-      cancelTextColor: Theme.of(context).primaryColor,
-      buttonColor: Theme.of(context).primaryColor,
-      onConfirm: () {
-        Get.back();
-        controller.logout();
-      },
-      onCancel: () => Get.back(),
-      textConfirm: 'Logout',
-      textCancel: 'Batal',
-      radius: 15.0,
-      titleStyle: TextStyle(
-        fontWeight: FontWeight.bold,
-        color: Theme.of(context).primaryColor,
-      ),
-      middleTextStyle: TextStyle(
-        color: Theme.of(context).textTheme.bodyLarge?.color,
-      ),
-      backgroundColor: Theme.of(context).cardColor,
     );
   }
 
@@ -423,9 +396,7 @@ class HomeView extends GetView<HomeController> {
         padding: const EdgeInsets.symmetric(horizontal: 20),
         child: Text(
           'Tidak ada layanan yang tersedia.',
-          style: TextStyle(
-            color: Get.theme.textTheme.bodyLarge?.color,
-          ),
+          style: TextStyle(color: Get.theme.textTheme.bodyLarge?.color),
         ),
       );
     }
@@ -548,8 +519,7 @@ class HomeView extends GetView<HomeController> {
                     child: Row(
                       children: [
                         GestureDetector(
-                          onTap: () =>
-                              _showEditServiceDialog(context, service),
+                          onTap: () => _showEditServiceDialog(context, service),
                           child: Container(
                             padding: const EdgeInsets.all(6),
                             decoration: BoxDecoration(
@@ -588,7 +558,9 @@ class HomeView extends GetView<HomeController> {
                     left: 12,
                     child: Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 6, vertical: 2),
+                        horizontal: 6,
+                        vertical: 2,
+                      ),
                       decoration: BoxDecoration(
                         color: service.fromApi
                             ? Colors.blue.shade700.withOpacity(0.9)
@@ -648,7 +620,9 @@ class HomeView extends GetView<HomeController> {
                   onTap: () {
                     controller.changeIndex(index);
 
-                    if (index != 0) {
+                    if (index == 3) {
+                      Get.toNamed(Routes.PROFILE);
+                    } else if (index != 0) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
                           content: Text(
@@ -690,8 +664,8 @@ class HomeView extends GetView<HomeController> {
                           color: isActive
                               ? Theme.of(context).primaryColor
                               : (Get.theme.brightness == Brightness.dark
-                                  ? Colors.grey.shade400
-                                  : Colors.grey.shade600),
+                                    ? Colors.grey.shade400
+                                    : Colors.grey.shade600),
                           size: 26,
                         ),
                         const SizedBox(height: 4),
@@ -702,8 +676,8 @@ class HomeView extends GetView<HomeController> {
                             color: isActive
                                 ? Theme.of(context).primaryColor
                                 : (Get.theme.brightness == Brightness.dark
-                                    ? Colors.grey.shade400
-                                    : Colors.grey.shade600),
+                                      ? Colors.grey.shade400
+                                      : Colors.grey.shade600),
                             fontWeight: isActive
                                 ? FontWeight.bold
                                 : FontWeight.normal,
@@ -744,9 +718,7 @@ class HomeView extends GetView<HomeController> {
               ),
               decoration: InputDecoration(
                 labelText: "Name",
-                labelStyle: TextStyle(
-                  color: Theme.of(context).primaryColor,
-                ),
+                labelStyle: TextStyle(color: Theme.of(context).primaryColor),
               ),
             ),
             const SizedBox(height: 8),
@@ -757,9 +729,7 @@ class HomeView extends GetView<HomeController> {
               ),
               decoration: InputDecoration(
                 labelText: "Subtitle",
-                labelStyle: TextStyle(
-                  color: Theme.of(context).primaryColor,
-                ),
+                labelStyle: TextStyle(color: Theme.of(context).primaryColor),
               ),
             ),
             const SizedBox(height: 8),
@@ -770,9 +740,7 @@ class HomeView extends GetView<HomeController> {
               ),
               decoration: InputDecoration(
                 labelText: "Price",
-                labelStyle: TextStyle(
-                  color: Theme.of(context).primaryColor,
-                ),
+                labelStyle: TextStyle(color: Theme.of(context).primaryColor),
               ),
             ),
             const SizedBox(height: 8),
@@ -783,9 +751,7 @@ class HomeView extends GetView<HomeController> {
               ),
               decoration: InputDecoration(
                 labelText: "Discount (optional)",
-                labelStyle: TextStyle(
-                  color: Theme.of(context).primaryColor,
-                ),
+                labelStyle: TextStyle(color: Theme.of(context).primaryColor),
               ),
             ),
             const SizedBox(height: 12),
@@ -834,9 +800,7 @@ class HomeView extends GetView<HomeController> {
               ),
               decoration: InputDecoration(
                 labelText: "Name",
-                labelStyle: TextStyle(
-                  color: Theme.of(context).primaryColor,
-                ),
+                labelStyle: TextStyle(color: Theme.of(context).primaryColor),
               ),
             ),
             const SizedBox(height: 8),
@@ -847,9 +811,7 @@ class HomeView extends GetView<HomeController> {
               ),
               decoration: InputDecoration(
                 labelText: "Subtitle",
-                labelStyle: TextStyle(
-                  color: Theme.of(context).primaryColor,
-                ),
+                labelStyle: TextStyle(color: Theme.of(context).primaryColor),
               ),
             ),
             const SizedBox(height: 8),
@@ -860,9 +822,7 @@ class HomeView extends GetView<HomeController> {
               ),
               decoration: InputDecoration(
                 labelText: "Price",
-                labelStyle: TextStyle(
-                  color: Theme.of(context).primaryColor,
-                ),
+                labelStyle: TextStyle(color: Theme.of(context).primaryColor),
               ),
             ),
             const SizedBox(height: 8),
@@ -873,9 +833,7 @@ class HomeView extends GetView<HomeController> {
               ),
               decoration: InputDecoration(
                 labelText: "Discount (optional)",
-                labelStyle: TextStyle(
-                  color: Theme.of(context).primaryColor,
-                ),
+                labelStyle: TextStyle(color: Theme.of(context).primaryColor),
               ),
             ),
             const SizedBox(height: 12),
