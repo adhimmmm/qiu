@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controllers/home_controller.dart';
+import '../../../data/services/auth_service.dart';
 import '../../../data/models/laundry_service_model.dart';
 import '../../../data/models/user_role.dart';
 import '../../../routes/app_routes.dart';
@@ -8,29 +9,38 @@ import '../../../routes/app_routes.dart';
 class HomeView extends GetView<HomeController> {
   const HomeView({super.key});
 
-  // Kategori data tetap konstan
+  // --- PALET WARNA BARU ---
+  static const Color primaryTeal = Color(0xFF1E5B53);
+  static const Color accentTeal = Color(0xFF388E3C);
+  static const Color lightBackground = Color(0xFFF0F0F0);
+
+  // --- DATA (Konstanta untuk Keringkasan Kode) ---
   static const List<Map<String, dynamic>> _categories = [
-    {'name': 'Laundry', 'icon': Icons.local_laundry_service},
-    {'name': 'Setrika', 'icon': Icons.iron},
-    {'name': 'Express', 'icon': Icons.flash_on},
-    {'name': 'Sepatu', 'icon': Icons.sports_soccer},
+    {
+      'name': 'Laundry',
+      'icon': Icons.local_laundry_service,
+      'color': primaryTeal,
+    },
+    {'name': 'Setrika', 'icon': Icons.iron, 'color': primaryTeal},
+    {'name': 'Express', 'icon': Icons.flash_on, 'color': primaryTeal},
+    {'name': 'Sepatu', 'icon': Icons.sports_soccer, 'color': primaryTeal},
   ];
 
   @override
   Widget build(BuildContext context) {
     return Obx(
       () => Scaffold(
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        backgroundColor: lightBackground,
         appBar: AppBar(
           toolbarHeight: 0,
           elevation: 0,
-          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+          backgroundColor: lightBackground,
         ),
         body: _buildBody(context),
         bottomNavigationBar: _buildBottomNav(),
         floatingActionButton: controller.userRole.value == UserRole.admin
             ? FloatingActionButton(
-                backgroundColor: Theme.of(context).primaryColor,
+                backgroundColor: primaryTeal,
                 onPressed: () => _showAddServiceDialog(context),
                 child: const Icon(Icons.add, color: Colors.white),
               )
@@ -42,10 +52,8 @@ class HomeView extends GetView<HomeController> {
   Widget _buildBody(BuildContext context) {
     return Obx(() {
       if (controller.isLoading.value) {
-        return Center(
-          child: CircularProgressIndicator(
-            color: Theme.of(context).primaryColor,
-          ),
+        return const Center(
+          child: CircularProgressIndicator(color: primaryTeal),
         );
       }
       if (controller.errorMessage.value.isNotEmpty) {
@@ -66,18 +74,16 @@ class HomeView extends GetView<HomeController> {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: const Text('View All popular services!'),
-                    backgroundColor: Theme.of(context).colorScheme.secondary,
+                    backgroundColor: accentTeal,
                     duration: const Duration(seconds: 1),
                   ),
                 );
               },
             ),
             const SizedBox(height: 12),
-            Obx(() {
-              return _buildServiceList(
-                controller.services.toList().cast<LaundryService>(),
-              );
-            }),
+            _buildServiceList(
+              controller.services.toList().cast<LaundryService>(),
+            ),
             const SizedBox(height: 100),
           ],
         ),
@@ -108,7 +114,7 @@ class HomeView extends GetView<HomeController> {
 
   Widget _buildHeader(BuildContext context) {
     return Container(
-      color: Theme.of(context).scaffoldBackgroundColor,
+      color: lightBackground,
       child: Column(
         children: [
           Padding(
@@ -116,18 +122,14 @@ class HomeView extends GetView<HomeController> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Row(
+                const Row(
                   children: [
-                    Icon(
-                      Icons.location_on,
-                      color: Theme.of(context).primaryColor,
-                      size: 24,
-                    ),
-                    const SizedBox(width: 8),
+                    Icon(Icons.location_on, color: primaryTeal, size: 24),
+                    SizedBox(width: 8),
                     Text(
                       'Malang, ID',
                       style: TextStyle(
-                        color: Theme.of(context).primaryColor,
+                        color: primaryTeal,
                         fontWeight: FontWeight.bold,
                         fontSize: 16,
                       ),
@@ -136,50 +138,31 @@ class HomeView extends GetView<HomeController> {
                 ),
                 Row(
                   children: [
-                    Icon(
+                    const Icon(
                       Icons.notifications_none,
-                      color: Theme.of(context).primaryColor,
+                      color: primaryTeal,
                       size: 24,
-                    ),
-                    const SizedBox(width: 10),
-                    // TOGGLE DARK MODE
-                    GestureDetector(
-                      onTap: () => controller.toggleTheme(),
-                      child: Obx(() {
-                        return Icon(
-                          controller.isDarkMode
-                              ? Icons.wb_sunny_outlined
-                              : Icons.nightlight_round,
-                          color: Theme.of(context).primaryColor,
-                          size: 24,
-                        );
-                      }),
                     ),
                     const SizedBox(width: 10),
                     GestureDetector(
                       onTap: () => Get.toNamed(Routes.FAVORITES),
-                      child: Icon(
+                      child: const Icon(
                         Icons.favorite_border,
-                        color: Theme.of(context).primaryColor,
+                        color: primaryTeal,
                         size: 24,
                       ),
                     ),
                     const SizedBox(width: 10),
                     GestureDetector(
-                      onTap: () => Get.toNamed(Routes.PROFILE),
+                      onTap: () => _showLogoutDialog(context),
                       child: Container(
                         width: 35,
                         height: 35,
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(10),
-                          color: Theme.of(context).brightness == Brightness.dark
-                              ? Colors.grey.shade800
-                              : Colors.grey.shade300,
+                          color: Colors.grey.shade300,
                         ),
-                        child: Icon(
-                          Icons.person,
-                          color: Theme.of(context).primaryColor,
-                        ),
+                        child: const Icon(Icons.person, color: primaryTeal),
                       ),
                     ),
                   ],
@@ -192,7 +175,7 @@ class HomeView extends GetView<HomeController> {
             child: Container(
               height: 50,
               decoration: BoxDecoration(
-                color: Theme.of(context).cardColor,
+                color: Colors.white,
                 borderRadius: BorderRadius.circular(15),
                 boxShadow: [
                   BoxShadow(
@@ -202,19 +185,13 @@ class HomeView extends GetView<HomeController> {
                   ),
                 ],
               ),
-              child: TextField(
-                style: TextStyle(
-                  color: Theme.of(context).textTheme.bodyLarge?.color,
-                ),
+              child: const TextField(
                 decoration: InputDecoration(
-                  prefixIcon: Icon(
-                    Icons.search,
-                    color: Theme.of(context).primaryColor,
-                  ),
+                  prefixIcon: Icon(Icons.search, color: primaryTeal),
                   hintText: 'Search for a service...',
-                  hintStyle: const TextStyle(color: Colors.grey),
+                  hintStyle: TextStyle(color: Colors.grey),
                   border: InputBorder.none,
-                  contentPadding: const EdgeInsets.only(top: 15),
+                  contentPadding: EdgeInsets.only(top: 15),
                 ),
               ),
             ),
@@ -230,21 +207,21 @@ class HomeView extends GetView<HomeController> {
             ),
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: Theme.of(context).primaryColor,
+              color: primaryTeal,
               borderRadius: BorderRadius.circular(20),
               boxShadow: [
                 BoxShadow(
-                  color: Theme.of(context).primaryColor.withOpacity(0.4),
+                  color: primaryTeal.withOpacity(0.4),
                   blurRadius: 15,
                   offset: const Offset(0, 8),
                 ),
               ],
             ),
-            child: Column(
+            child: const Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Text(
+                Text(
                   'LAUNDRY SOLUTION,',
                   style: TextStyle(
                     color: Colors.white70,
@@ -252,7 +229,7 @@ class HomeView extends GetView<HomeController> {
                     fontWeight: FontWeight.w500,
                   ),
                 ),
-                const Text(
+                Text(
                   'ONE TAP AWAY!',
                   style: TextStyle(
                     color: Colors.white,
@@ -260,12 +237,12 @@ class HomeView extends GetView<HomeController> {
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                const SizedBox(height: 15),
+                SizedBox(height: 15),
                 Chip(
                   label: Text(
                     'Pesan Sekarang',
                     style: TextStyle(
-                      color: Theme.of(context).primaryColor,
+                      color: primaryTeal,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -279,6 +256,29 @@ class HomeView extends GetView<HomeController> {
     );
   }
 
+  void _showLogoutDialog(BuildContext context) {
+    Get.defaultDialog(
+      title: 'Logout',
+      middleText: 'Apakah Anda yakin ingin keluar dari akun ini?',
+      confirmTextColor: Colors.white,
+      cancelTextColor: primaryTeal,
+      buttonColor: primaryTeal,
+      onConfirm: () {
+        Get.back();
+        controller.logout();
+      },
+      onCancel: () => Get.back(),
+      textConfirm: 'Logout',
+      textCancel: 'Batal',
+      radius: 15.0,
+      titleStyle: const TextStyle(
+        fontWeight: FontWeight.bold,
+        color: primaryTeal,
+      ),
+      middleTextStyle: const TextStyle(color: Colors.black87),
+    );
+  }
+
   Widget _buildSectionTitle(String title, {Function(BuildContext)? onTap}) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -287,10 +287,10 @@ class HomeView extends GetView<HomeController> {
         children: [
           Text(
             title,
-            style: TextStyle(
+            style: const TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
-              color: Get.theme.primaryColor,
+              color: primaryTeal,
             ),
           ),
           if (onTap != null)
@@ -303,7 +303,7 @@ class HomeView extends GetView<HomeController> {
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
-                      color: Get.theme.colorScheme.secondary,
+                      color: Colors.tealAccent.shade400,
                     ),
                   ),
                 );
@@ -332,13 +332,9 @@ class HomeView extends GetView<HomeController> {
           return Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             decoration: BoxDecoration(
-              color: Get.theme.cardColor,
+              color: Colors.white,
               borderRadius: BorderRadius.circular(15),
-              border: Border.all(
-                color: Get.theme.brightness == Brightness.dark
-                    ? Colors.grey.shade800
-                    : Colors.grey.shade200,
-              ),
+              border: Border.all(color: Colors.grey.shade200),
               boxShadow: [
                 BoxShadow(
                   color: Colors.grey.withOpacity(0.1),
@@ -353,12 +349,12 @@ class HomeView extends GetView<HomeController> {
                 Container(
                   padding: const EdgeInsets.all(5),
                   decoration: BoxDecoration(
-                    color: Get.theme.primaryColor.withOpacity(0.1),
+                    color: primaryTeal.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Icon(
                     category['icon'] as IconData,
-                    color: Get.theme.primaryColor,
+                    color: primaryTeal,
                     size: 20,
                   ),
                 ),
@@ -366,20 +362,18 @@ class HomeView extends GetView<HomeController> {
                 Expanded(
                   child: Text(
                     category['name'] as String,
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
-                      color: Get.theme.primaryColor,
+                      color: primaryTeal,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
-                Icon(
+                const Icon(
                   Icons.keyboard_arrow_right,
-                  color: Get.theme.brightness == Brightness.dark
-                      ? Colors.grey.shade600
-                      : Colors.grey,
+                  color: Colors.grey,
                   size: 20,
                 ),
               ],
@@ -392,12 +386,9 @@ class HomeView extends GetView<HomeController> {
 
   Widget _buildServiceList(List<LaundryService> services) {
     if (services.isEmpty) {
-      return Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20),
-        child: Text(
-          'Tidak ada layanan yang tersedia.',
-          style: TextStyle(color: Get.theme.textTheme.bodyLarge?.color),
-        ),
+      return const Padding(
+        padding: EdgeInsets.symmetric(horizontal: 20),
+        child: Text('Tidak ada layanan yang tersedia.'),
       );
     }
 
@@ -413,7 +404,6 @@ class HomeView extends GetView<HomeController> {
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 20),
         itemCount: services.length,
-        physics: const BouncingScrollPhysics(),
         itemBuilder: (context, index) {
           final service = services[index];
           return Container(
@@ -431,7 +421,9 @@ class HomeView extends GetView<HomeController> {
               ],
             ),
             child: Stack(
+              clipBehavior: Clip.none,
               children: [
+                // 🔷 CARD CONTENT
                 Padding(
                   padding: const EdgeInsets.all(12),
                   child: Column(
@@ -473,6 +465,8 @@ class HomeView extends GetView<HomeController> {
                     ],
                   ),
                 ),
+
+                // 🔴 BADGE DISKON (POJOK KANAN ATAS)
                 if (service.discount != null)
                   Positioned(
                     top: 10,
@@ -496,6 +490,8 @@ class HomeView extends GetView<HomeController> {
                       ),
                     ),
                   ),
+
+                // 💚 FAVORITE BUTTON (POJOK KANAN BAWAH)
                 Positioned(
                   bottom: 8,
                   right: 8,
@@ -511,17 +507,49 @@ class HomeView extends GetView<HomeController> {
                     );
                   }),
                 ),
+
+                // 🟦 LABEL API / DB (SEDIKIT DI ATAS FAVORITE)
+                Positioned(
+                  bottom: 40,
+                  left: 12,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                      vertical: 2,
+                    ),
+                    decoration: BoxDecoration(
+                      color: service.fromApi
+                          ? Colors.blue.shade700.withOpacity(0.9)
+                          : Colors.green.shade700.withOpacity(0.9),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Text(
+                      service.fromApi ? 'API' : 'DB',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 9,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+
+                // 🟨 EDIT + DELETE (CENTER TOP)
                 if (controller.userRole.value == UserRole.admin &&
                     !service.fromApi)
                   Positioned(
-                    top: 8,
-                    left: 8,
+                    top: 5, // dinaikkan sedikit agar NEW floating style
+                    left: 0,
+                    right: 0,
                     child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
+                        // EDIT
                         GestureDetector(
                           onTap: () => _showEditServiceDialog(context, service),
                           child: Container(
                             padding: const EdgeInsets.all(6),
+                            margin: const EdgeInsets.symmetric(horizontal: 4),
                             decoration: BoxDecoration(
                               color: Colors.white.withOpacity(0.9),
                               borderRadius: BorderRadius.circular(6),
@@ -533,11 +561,12 @@ class HomeView extends GetView<HomeController> {
                             ),
                           ),
                         ),
-                        const SizedBox(width: 8),
+                        // DELETE
                         GestureDetector(
                           onTap: () => _showDeleteConfirm(context, service),
                           child: Container(
                             padding: const EdgeInsets.all(6),
+                            margin: const EdgeInsets.symmetric(horizontal: 4),
                             decoration: BoxDecoration(
                               color: Colors.white.withOpacity(0.9),
                               borderRadius: BorderRadius.circular(6),
@@ -550,31 +579,6 @@ class HomeView extends GetView<HomeController> {
                           ),
                         ),
                       ],
-                    ),
-                  ),
-                if (controller.userRole.value == UserRole.admin)
-                  Positioned(
-                    bottom: 40,
-                    left: 12,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 6,
-                        vertical: 2,
-                      ),
-                      decoration: BoxDecoration(
-                        color: service.fromApi
-                            ? Colors.blue.shade700.withOpacity(0.9)
-                            : Colors.green.shade700.withOpacity(0.9),
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: Text(
-                        service.fromApi ? 'API' : 'DB',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 9,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
                     ),
                   ),
               ],
@@ -597,7 +601,7 @@ class HomeView extends GetView<HomeController> {
       height: 100,
       padding: const EdgeInsets.symmetric(vertical: 10),
       decoration: BoxDecoration(
-        color: Get.theme.cardColor,
+        color: Colors.white,
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.15),
@@ -620,15 +624,13 @@ class HomeView extends GetView<HomeController> {
                   onTap: () {
                     controller.changeIndex(index);
 
-                    if (index == 3) {
-                      Get.toNamed(Routes.PROFILE);
-                    } else if (index != 0) {
+                    if (index != 0) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
                           content: Text(
                             'Halaman ${item['label']} (Coming Soon)',
                           ),
-                          backgroundColor: Theme.of(context).primaryColor,
+                          backgroundColor: primaryTeal,
                           duration: const Duration(milliseconds: 1000),
                           behavior: SnackBarBehavior.floating,
                           shape: RoundedRectangleBorder(
@@ -651,7 +653,7 @@ class HomeView extends GetView<HomeController> {
                     ),
                     decoration: BoxDecoration(
                       color: isActive
-                          ? Theme.of(context).primaryColor.withOpacity(0.15)
+                          ? primaryTeal.withOpacity(0.15)
                           : Colors.transparent,
                       borderRadius: BorderRadius.circular(20),
                     ),
@@ -661,11 +663,7 @@ class HomeView extends GetView<HomeController> {
                       children: [
                         Icon(
                           item['icon'] as IconData,
-                          color: isActive
-                              ? Theme.of(context).primaryColor
-                              : (Get.theme.brightness == Brightness.dark
-                                    ? Colors.grey.shade400
-                                    : Colors.grey.shade600),
+                          color: isActive ? primaryTeal : Colors.grey.shade600,
                           size: 26,
                         ),
                         const SizedBox(height: 4),
@@ -674,10 +672,8 @@ class HomeView extends GetView<HomeController> {
                           style: TextStyle(
                             fontSize: 10,
                             color: isActive
-                                ? Theme.of(context).primaryColor
-                                : (Get.theme.brightness == Brightness.dark
-                                      ? Colors.grey.shade400
-                                      : Colors.grey.shade600),
+                                ? primaryTeal
+                                : Colors.grey.shade600,
                             fontWeight: isActive
                                 ? FontWeight.bold
                                 : FontWeight.normal,
@@ -695,6 +691,9 @@ class HomeView extends GetView<HomeController> {
     );
   }
 
+  // -----------------------
+  // Dialog: Add Service
+  // -----------------------
   void _showAddServiceDialog(BuildContext context) {
     final nameC = TextEditingController();
     final subtitleC = TextEditingController();
@@ -703,55 +702,28 @@ class HomeView extends GetView<HomeController> {
 
     Get.defaultDialog(
       title: "Tambah Layanan",
-      backgroundColor: Theme.of(context).cardColor,
-      titleStyle: TextStyle(
-        color: Theme.of(context).primaryColor,
-        fontWeight: FontWeight.bold,
-      ),
       content: SingleChildScrollView(
         child: Column(
           children: [
             TextField(
               controller: nameC,
-              style: TextStyle(
-                color: Theme.of(context).textTheme.bodyLarge?.color,
-              ),
-              decoration: InputDecoration(
-                labelText: "Name",
-                labelStyle: TextStyle(color: Theme.of(context).primaryColor),
-              ),
+              decoration: const InputDecoration(labelText: "Name"),
             ),
             const SizedBox(height: 8),
             TextField(
               controller: subtitleC,
-              style: TextStyle(
-                color: Theme.of(context).textTheme.bodyLarge?.color,
-              ),
-              decoration: InputDecoration(
-                labelText: "Subtitle",
-                labelStyle: TextStyle(color: Theme.of(context).primaryColor),
-              ),
+              decoration: const InputDecoration(labelText: "Subtitle"),
             ),
             const SizedBox(height: 8),
             TextField(
               controller: priceC,
-              style: TextStyle(
-                color: Theme.of(context).textTheme.bodyLarge?.color,
-              ),
-              decoration: InputDecoration(
-                labelText: "Price",
-                labelStyle: TextStyle(color: Theme.of(context).primaryColor),
-              ),
+              decoration: const InputDecoration(labelText: "Price"),
             ),
             const SizedBox(height: 8),
             TextField(
               controller: discountC,
-              style: TextStyle(
-                color: Theme.of(context).textTheme.bodyLarge?.color,
-              ),
-              decoration: InputDecoration(
+              decoration: const InputDecoration(
                 labelText: "Discount (optional)",
-                labelStyle: TextStyle(color: Theme.of(context).primaryColor),
               ),
             ),
             const SizedBox(height: 12),
@@ -760,9 +732,6 @@ class HomeView extends GetView<HomeController> {
       ),
       textConfirm: "Tambah",
       textCancel: "Batal",
-      confirmTextColor: Colors.white,
-      cancelTextColor: Theme.of(context).primaryColor,
-      buttonColor: Theme.of(context).primaryColor,
       onConfirm: () async {
         final ok = await controller.addService(
           name: nameC.text.trim(),
@@ -777,6 +746,9 @@ class HomeView extends GetView<HomeController> {
     );
   }
 
+  // -----------------------
+  // Dialog: Edit Service
+  // -----------------------
   void _showEditServiceDialog(BuildContext context, LaundryService service) {
     final nameC = TextEditingController(text: service.name);
     final subtitleC = TextEditingController(text: service.subtitle);
@@ -785,55 +757,28 @@ class HomeView extends GetView<HomeController> {
 
     Get.defaultDialog(
       title: "Edit Layanan",
-      backgroundColor: Theme.of(context).cardColor,
-      titleStyle: TextStyle(
-        color: Theme.of(context).primaryColor,
-        fontWeight: FontWeight.bold,
-      ),
       content: SingleChildScrollView(
         child: Column(
           children: [
             TextField(
               controller: nameC,
-              style: TextStyle(
-                color: Theme.of(context).textTheme.bodyLarge?.color,
-              ),
-              decoration: InputDecoration(
-                labelText: "Name",
-                labelStyle: TextStyle(color: Theme.of(context).primaryColor),
-              ),
+              decoration: const InputDecoration(labelText: "Name"),
             ),
             const SizedBox(height: 8),
             TextField(
               controller: subtitleC,
-              style: TextStyle(
-                color: Theme.of(context).textTheme.bodyLarge?.color,
-              ),
-              decoration: InputDecoration(
-                labelText: "Subtitle",
-                labelStyle: TextStyle(color: Theme.of(context).primaryColor),
-              ),
+              decoration: const InputDecoration(labelText: "Subtitle"),
             ),
             const SizedBox(height: 8),
             TextField(
               controller: priceC,
-              style: TextStyle(
-                color: Theme.of(context).textTheme.bodyLarge?.color,
-              ),
-              decoration: InputDecoration(
-                labelText: "Price",
-                labelStyle: TextStyle(color: Theme.of(context).primaryColor),
-              ),
+              decoration: const InputDecoration(labelText: "Price"),
             ),
             const SizedBox(height: 8),
             TextField(
               controller: discountC,
-              style: TextStyle(
-                color: Theme.of(context).textTheme.bodyLarge?.color,
-              ),
-              decoration: InputDecoration(
+              decoration: const InputDecoration(
                 labelText: "Discount (optional)",
-                labelStyle: TextStyle(color: Theme.of(context).primaryColor),
               ),
             ),
             const SizedBox(height: 12),
@@ -842,9 +787,6 @@ class HomeView extends GetView<HomeController> {
       ),
       textConfirm: "Simpan",
       textCancel: "Batal",
-      confirmTextColor: Colors.white,
-      cancelTextColor: Theme.of(context).primaryColor,
-      buttonColor: Theme.of(context).primaryColor,
       onConfirm: () async {
         final ok = await controller.updateService(
           id: service.id,
@@ -860,24 +802,16 @@ class HomeView extends GetView<HomeController> {
     );
   }
 
+  // -----------------------
+  // Dialog: Delete Confirm
+  // -----------------------
   void _showDeleteConfirm(BuildContext context, LaundryService service) {
     Get.defaultDialog(
       title: "Hapus Layanan?",
-      backgroundColor: Theme.of(context).cardColor,
-      titleStyle: TextStyle(
-        color: Theme.of(context).primaryColor,
-        fontWeight: FontWeight.bold,
-      ),
       middleText:
           "Apakah Anda yakin ingin menghapus layanan \"${service.name}\"?",
-      middleTextStyle: TextStyle(
-        color: Theme.of(context).textTheme.bodyLarge?.color,
-      ),
       textCancel: "Batal",
       textConfirm: "Hapus",
-      confirmTextColor: Colors.white,
-      cancelTextColor: Theme.of(context).primaryColor,
-      buttonColor: Theme.of(context).primaryColor,
       onConfirm: () async {
         final ok = await controller.deleteService(service.id);
         if (ok) {
