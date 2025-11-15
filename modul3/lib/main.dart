@@ -38,8 +38,9 @@ void main() async {
 
   // Tentukan rute awal berdasarkan status autentikasi
   final authService = Get.find<AuthService>();
-  final initialRoute =
-      authService.isLoggedIn ? AppPages.routes[0].name : AppPages.initial;
+  final initialRoute = authService.isLoggedIn
+      ? AppPages.routes[0].name
+      : AppPages.initial;
 
   runApp(LaundryApp(initialRoute: initialRoute));
 }

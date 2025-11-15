@@ -1,36 +1,48 @@
 import 'package:get/get.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
 import '../../../data/models/laundry_service_model.dart';
 import '../../../data/services/dio_service.dart';
 import '../../../data/services/auth_service.dart';
 
-// <-- 1. IMPORT BARU UNTUK FITUR FAVORIT
-import '../../../data/models/favorite_product_model.dart'; // <-- Penting
+// FAVORIT
+import '../../../data/models/favorite_product_model.dart';
 import '../../../data/services/favorite_service.dart';
+
+// ROLE
+import '../../../data/models/user_role.dart';
 
 class HomeController extends GetxController {
   final AuthService _authService = Get.find<AuthService>();
   final DioService _dioService = DioService();
-
-  // <-- 2. INISIALISASI SERVICE FAVORIT
   final FavoriteService favoriteService = Get.find<FavoriteService>();
 
+  /// UI state
   final isLoading = false.obs;
   final services = <LaundryService>[].obs;
   final errorMessage = ''.obs;
   final currentIndex = 0.obs;
 
+  /// Role User
+  final userRole = UserRole.visitor.obs;
+
   @override
   void onInit() {
     super.onInit();
-    print('🏠 Home Controller initialized');
+    fetchUserRole();
     fetchServices();
   }
 
+  // =========================
+  // NAVBAR
+  // =========================
   void changeIndex(int index) {
     currentIndex.value = index;
   }
 
-  //fungsi logout
+  // =========================
+  // LOGOUT
+  // =========================
   Future<void> logout() async {
     isLoading.value = true;
     try {
@@ -42,60 +54,216 @@ class HomeController extends GetxController {
     }
   }
 
+  // =========================
+  // FETCH USER ROLE
+  // =========================
+  Future<void> fetchUserRole() async {
+    final user = Supabase.instance.client.auth.currentUser;
+    if (user == null) return;
+
+    final result = await Supabase.instance.client
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .maybeSingle();
+
+    if (result != null) {
+      if (result['role'] == 'admin') {
+        userRole.value = UserRole.admin;
+      } else {
+        userRole.value = UserRole.visitor;
+      }
+    }
+  }
+
+  // =========================
+  // FETCH DATA (DIO + SUPABASE)
+  // =========================
   Future<void> fetchServices() async {
     isLoading.value = true;
     errorMessage.value = '';
 
     try {
-      final result = await _dioService.fetchServices();
+      // 1. DIO API - tandai dengan fromApi: true
+      final dioResult = await _dioService.fetchServices();
+      List<LaundryService> dioServices = [];
 
-      if (result['success']) {
-        services.value = result['data'];
-        print('✅ Loaded ${services.length} services');
-      } else {
-        errorMessage.value = result['error'];
-        Get.snackbar(
-          'Error',
-          'Failed to load services: ${result['error']}',
-          snackPosition: SnackPosition.BOTTOM,
-        );
+      if (dioResult['success']) {
+        final List<dynamic> dioData = dioResult['data'];
+
+        // Mapping data dari DIO dan tandai fromApi = true
+        dioServices = dioData.map((json) {
+          if (json is LaundryService) {
+            // Jika sudah LaundryService, copy dengan fromApi = true
+            return json.copyWith(fromApi: true);
+          } else {
+            // Jika masih Map, parse dengan fromApi = true
+            return LaundryService.fromJson(
+              json as Map<String, dynamic>,
+              fromApi: true,
+            );
+          }
+        }).toList();
+
+        print("🔥 JUMLAH DATA DARI DIO API: ${dioServices.length}");
       }
+
+      // 2. SUPABASE - tandai dengan fromApi: false (default)
+      print("🔥 CEK SUPABASE: MENGAMBIL DATA...");
+      final supabaseList = await Supabase.instance.client
+          .from('laundry_services')
+          .select();
+
+      print("🔥 HASIL RAW SUPABASE:");
+      print(supabaseList);
+
+      if (supabaseList is! List) {
+        print("❌ ERROR: Supabase return bukan list");
+      }
+
+      if (supabaseList.isEmpty) {
+        print("⚠️ WARNING: Supabase mengembalikan list KOSONG");
+      }
+
+      // Mapping data dari Supabase dengan fromApi = false (default)
+      final supabaseServices = supabaseList
+          .map<LaundryService>(
+            (json) => LaundryService.fromJson(json, fromApi: false),
+          )
+          .toList();
+
+      print("🔥 JUMLAH DATA DARI SUPABASE: ${supabaseServices.length}");
+
+      // 3. Gabung dua sumber
+      services.value = [...dioServices, ...supabaseServices];
+
+      print("🔥 TOTAL GABUNGAN SERVICES: ${services.length}");
+      print("🔥 DATA DARI API: ${services.where((s) => s.fromApi).length}");
+      print(
+        "🔥 DATA DARI SUPABASE: ${services.where((s) => !s.fromApi).length}",
+      );
     } catch (e) {
       errorMessage.value = e.toString();
-      print('❌ Error: $e');
+      print("❌ FETCH ERROR: $e");
     } finally {
       isLoading.value = false;
     }
   }
 
-  // --- [ FUNGSI BARU UNTUK FITUR FAVORIT ] ---
-
-  /// Fungsi [isFavorite]
+  // =========================
+  // FAVORITE
+  // =========================
   bool isFavorite(String productId) {
-    // Membaca dari RxSet di service
     return favoriteService.favoriteProductIds.contains(productId);
   }
 
-  /// Fungsi [toggleFavorite]
-  /// Dipanggil dari tombol 'onPressed' di view.
   void toggleFavorite(LaundryService product) {
-    
-    // --- [ INI ADALAH PERBAIKANNYA ] ---
-    
-    // 1. Kita ubah 'price' (String) dari LaundryService menjadi 'double'.
-    //    Kita gunakan tryParse untuk keamanan jika data 'price' tidak valid.
-    //    (Catatan: Ini akan gagal jika 'price' berisi "Rp " atau ".")
     final double priceAsDouble = double.tryParse(product.price) ?? 0.0;
 
-    // 2. Buat objek FavoriteProductModel dengan 4 field yang benar
     final favoriteData = FavoriteProductModel(
-      productId: product.id,   // <- Diambil dari LaundryService
-      name: product.name,        // <- Diambil dari LaundryService
-      price: priceAsDouble,      // <- Hasil konversi kita
-      imageUrl: '',              // <- Kita beri string kosong karena tidak ada data
+      productId: product.id,
+      name: product.name,
+      price: priceAsDouble,
+      imageUrl: '',
     );
 
-    // 3. Panggil service untuk menyimpan/menghapus
     favoriteService.toggleFavorite(favoriteData);
+  }
+
+  // =========================
+  // CRUD SUPABASE (hanya untuk data Supabase)
+  // =========================
+
+  Future<bool> addService({
+    required String name,
+    required String subtitle,
+    required String price,
+    required String discount,
+  }) async {
+    try {
+      await Supabase.instance.client.from('laundry_services').insert({
+        'name': name,
+        'subtitle': subtitle,
+        'price': price,
+        'discount': discount.isEmpty ? null : discount,
+      });
+
+      await fetchServices();
+      Get.snackbar(
+        'Berhasil',
+        'Layanan berhasil ditambahkan',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+      return true;
+    } catch (e) {
+      print("❌ Add Error: $e");
+      Get.snackbar(
+        'Error',
+        'Gagal menambahkan layanan: $e',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+      return false;
+    }
+  }
+
+  Future<bool> updateService({
+    required String id,
+    required String name,
+    required String subtitle,
+    required String price,
+    required String discount,
+  }) async {
+    try {
+      await Supabase.instance.client
+          .from('laundry_services')
+          .update({
+            'name': name,
+            'subtitle': subtitle,
+            'price': price,
+            'discount': discount.isEmpty ? null : discount,
+          })
+          .eq('id', id);
+
+      await fetchServices();
+      Get.snackbar(
+        'Berhasil',
+        'Layanan berhasil diupdate',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+      return true;
+    } catch (e) {
+      print("❌ Update Error: $e");
+      Get.snackbar(
+        'Error',
+        'Gagal mengupdate layanan: $e',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+      return false;
+    }
+  }
+
+  Future<bool> deleteService(String id) async {
+    try {
+      await Supabase.instance.client
+          .from('laundry_services')
+          .delete()
+          .eq('id', id);
+
+      await fetchServices();
+      Get.snackbar(
+        'Berhasil',
+        'Layanan berhasil dihapus',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+      return true;
+    } catch (e) {
+      print("❌ Delete Error: $e");
+      Get.snackbar(
+        'Error',
+        'Gagal menghapus layanan: $e',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+      return false;
+    }
   }
 }
