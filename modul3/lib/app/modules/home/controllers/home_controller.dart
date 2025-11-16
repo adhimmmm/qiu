@@ -129,9 +129,6 @@ class HomeController extends GetxController {
       print("🔥 HASIL RAW SUPABASE:");
       print(supabaseList);
 
-      if (supabaseList is! List) {
-        print("❌ ERROR: Supabase return bukan list");
-      }
 
       if (supabaseList.isEmpty) {
         print("⚠ WARNING: Supabase mengembalikan list KOSONG");
