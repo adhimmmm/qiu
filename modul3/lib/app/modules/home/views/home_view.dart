@@ -431,7 +431,9 @@ class HomeView extends GetView<HomeController> {
               ],
             ),
             child: Stack(
+              clipBehavior: Clip.none,
               children: [
+                // 🔷 CARD CONTENT
                 Padding(
                   padding: const EdgeInsets.all(12),
                   child: Column(
@@ -473,6 +475,8 @@ class HomeView extends GetView<HomeController> {
                     ],
                   ),
                 ),
+
+                // 🔴 BADGE DISKON (POJOK KANAN ATAS)
                 if (service.discount != null)
                   Positioned(
                     top: 10,
@@ -496,6 +500,8 @@ class HomeView extends GetView<HomeController> {
                       ),
                     ),
                   ),
+
+                // 💚 FAVORITE BUTTON (POJOK KANAN BAWAH)
                 Positioned(
                   bottom: 8,
                   right: 8,
@@ -511,17 +517,49 @@ class HomeView extends GetView<HomeController> {
                     );
                   }),
                 ),
+
+                // 🟦 LABEL API / DB (SEDIKIT DI ATAS FAVORITE)
+                Positioned(
+                  bottom: 40,
+                  left: 12,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                      vertical: 2,
+                    ),
+                    decoration: BoxDecoration(
+                      color: service.fromApi
+                          ? Colors.blue.shade700.withOpacity(0.9)
+                          : Colors.green.shade700.withOpacity(0.9),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Text(
+                      service.fromApi ? 'API' : 'DB',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 9,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+
+                // 🟨 EDIT + DELETE (CENTER TOP)
                 if (controller.userRole.value == UserRole.admin &&
                     !service.fromApi)
                   Positioned(
-                    top: 8,
-                    left: 8,
+                    top: 5, // dinaikkan sedikit agar NEW floating style
+                    left: 0,
+                    right: 0,
                     child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
+                        // EDIT
                         GestureDetector(
                           onTap: () => _showEditServiceDialog(context, service),
                           child: Container(
                             padding: const EdgeInsets.all(6),
+                            margin: const EdgeInsets.symmetric(horizontal: 4),
                             decoration: BoxDecoration(
                               color: Colors.white.withOpacity(0.9),
                               borderRadius: BorderRadius.circular(6),
@@ -533,11 +571,12 @@ class HomeView extends GetView<HomeController> {
                             ),
                           ),
                         ),
-                        const SizedBox(width: 8),
+                        // DELETE
                         GestureDetector(
                           onTap: () => _showDeleteConfirm(context, service),
                           child: Container(
                             padding: const EdgeInsets.all(6),
+                            margin: const EdgeInsets.symmetric(horizontal: 4),
                             decoration: BoxDecoration(
                               color: Colors.white.withOpacity(0.9),
                               borderRadius: BorderRadius.circular(6),
@@ -550,31 +589,6 @@ class HomeView extends GetView<HomeController> {
                           ),
                         ),
                       ],
-                    ),
-                  ),
-                if (controller.userRole.value == UserRole.admin)
-                  Positioned(
-                    bottom: 40,
-                    left: 12,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 6,
-                        vertical: 2,
-                      ),
-                      decoration: BoxDecoration(
-                        color: service.fromApi
-                            ? Colors.blue.shade700.withOpacity(0.9)
-                            : Colors.green.shade700.withOpacity(0.9),
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: Text(
-                        service.fromApi ? 'API' : 'DB',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 9,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
                     ),
                   ),
               ],

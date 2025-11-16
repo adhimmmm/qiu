@@ -15,6 +15,8 @@ class FavoritesView extends GetView<FavoritesController> {
         title: const Text('Favorit Saya'),
         backgroundColor: primaryTeal,
         foregroundColor: Colors.white,
+        // Tambahkan ini untuk memastikan icon back berwarna putih
+        iconTheme: const IconThemeData(color: Colors.white),
       ),
       body: Obx(() {
         // Jika list di controller-nya kosong, tampilkan pesan
@@ -38,13 +40,16 @@ class FavoritesView extends GetView<FavoritesController> {
                 // Karena imageUrl kita kosong, kita pakai ikon
                 leading: CircleAvatar(
                   backgroundColor: primaryTeal.withOpacity(0.1),
-                  child: const Icon(Icons.local_laundry_service, color: primaryTeal),
+                  child: const Icon(
+                    Icons.local_laundry_service,
+                    color: primaryTeal,
+                  ),
                 ),
-                
+
                 // Tampilkan nama dan harga dari database Hive
                 title: Text(product.name),
                 subtitle: Text('Rp ${product.price.toStringAsFixed(0)}'),
-                
+
                 // Tombol Hapus (Remove)
                 trailing: IconButton(
                   icon: const Icon(
