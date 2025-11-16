@@ -48,7 +48,7 @@ class FavoritesView extends GetView<FavoritesController> {
 
                 // Tampilkan nama dan harga dari database Hive
                 title: Text(product.name),
-                subtitle: Text('Rp ${product.price.toStringAsFixed(0)}'),
+                subtitle: Text('Rp ${product.price.toStringAsFixed(0)}/kg'),
 
                 // Tombol Hapus (Remove)
                 trailing: IconButton(

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:hive/hive.dart';
 
 import '../../../data/models/laundry_service_model.dart';
 import '../../../data/services/dio_service.dart';
@@ -31,11 +32,28 @@ class HomeController extends GetxController {
   /// Role User
   final userRole = UserRole.visitor.obs;
 
+  /// Offline Mode
+  final isOfflineMode = false.obs;
+  late Box<dynamic> _cacheBox;
+
   @override
   void onInit() {
     super.onInit();
+    _initCache();
     fetchUserRole();
     fetchServices();
+  }
+
+  // =========================
+  // CACHE INITIALIZATION
+  // =========================
+  Future<void> _initCache() async {
+    try {
+      _cacheBox = await Hive.openBox('services_cache');
+      print("📦 Cache box opened successfully");
+    } catch (e) {
+      print("❌ Cache initialization error: $e");
+    }
   }
 
   // =========================
@@ -75,38 +93,132 @@ class HomeController extends GetxController {
     final user = Supabase.instance.client.auth.currentUser;
     if (user == null) return;
 
-    final result = await Supabase.instance.client
-        .from('profiles')
-        .select('role')
-        .eq('id', user.id)
-        .maybeSingle();
+    try {
+      final result = await Supabase.instance.client
+          .from('profiles')
+          .select('role')
+          .eq('id', user.id)
+          .maybeSingle()
+          .timeout(Duration(seconds: 5));
 
-    if (result != null) {
-      if (result['role'] == 'admin') {
-        userRole.value = UserRole.admin;
-      } else {
-        userRole.value = UserRole.visitor;
+      if (result != null) {
+        if (result['role'] == 'admin') {
+          userRole.value = UserRole.admin;
+        } else {
+          userRole.value = UserRole.visitor;
+        }
       }
+    } catch (e) {
+      print("⚠️ Fetch role error (using default visitor): $e");
+      userRole.value = UserRole.visitor;
     }
   }
 
   // =========================
-  // FETCH DATA (DIO + SUPABASE)
+  // FETCH DATA (WITH OFFLINE SUPPORT)
   // =========================
   Future<void> fetchServices() async {
+    print("═══════════════════════════════════════");
+    print("🚀 FETCH SERVICES STARTED");
+    print("═══════════════════════════════════════");
+
+    // 1. LOAD CACHE FIRST (INSTANT UI)
+    await _loadFromCache();
+
+    // 2. TRY FETCH FROM NETWORK
     isLoading.value = true;
     errorMessage.value = '';
 
     try {
-      // 1. DIO API - tandai dengan fromApi: true
-      final dioResult = await _dioService.fetchServices();
-      List<LaundryService> dioServices = [];
+      // Fetch dari kedua sumber
+      final dioServices = await _fetchFromDio();
+      final supabaseServices = await _fetchFromSupabase();
+
+      // Gabung data
+      final allServices = [...dioServices, ...supabaseServices];
+
+      if (allServices.isNotEmpty) {
+        services.value = allServices;
+        await _saveToCache(allServices);
+        isOfflineMode.value = false;
+
+        print("═══════════════════════════════════════");
+        print("✅ ONLINE MODE - Data updated");
+        print("🔥 Total: ${allServices.length} services");
+        print("🔵 From API: ${dioServices.length}");
+        print("🟢 From Supabase: ${supabaseServices.length}");
+        print("═══════════════════════════════════════");
+      } else {
+        // Kalau tidak ada data baru, tetap pakai cache
+        if (services.isEmpty) {
+          errorMessage.value = "No data available";
+        }
+        isOfflineMode.value = true;
+      }
+    } catch (e) {
+      print("❌ FETCH ERROR: $e");
+      errorMessage.value = "Using cached data";
+      isOfflineMode.value = true;
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  // =========================
+  // LOAD FROM CACHE
+  // =========================
+  Future<void> _loadFromCache() async {
+    try {
+      final cached = _cacheBox.get('services_list');
+
+      if (cached != null && cached is List && cached.isNotEmpty) {
+        services.value = cached
+            .map(
+              (json) => LaundryService.fromJson(
+                Map<String, dynamic>.from(json),
+                fromApi: json['fromApi'] ?? false,
+              ),
+            )
+            .toList();
+
+        print("📦 CACHE LOADED: ${services.length} services");
+        isOfflineMode.value = true;
+      } else {
+        print("📦 Cache is empty");
+      }
+    } catch (e) {
+      print("❌ Cache load error: $e");
+    }
+  }
+
+  // =========================
+  // SAVE TO CACHE
+  // =========================
+  Future<void> _saveToCache(List<LaundryService> data) async {
+    try {
+      final jsonList = data.map((s) => s.toJson()).toList();
+      await _cacheBox.put('services_list', jsonList);
+      print("💾 CACHE SAVED: ${data.length} services");
+    } catch (e) {
+      print("❌ Cache save error: $e");
+    }
+  }
+
+  // =========================
+  // FETCH FROM DIO (WITH TIMEOUT)
+  // =========================
+  Future<List<LaundryService>> _fetchFromDio() async {
+    try {
+      print("🔵 Fetching from DIO API...");
+
+      final dioResult = await _dioService.fetchServices().timeout(
+        Duration(seconds: 8),
+      );
 
       if (dioResult['success']) {
         final List<dynamic> dioData = dioResult['data'];
 
-        // Mapping data dari DIO dan tandai fromApi = true
-        dioServices = dioData.map((json) {
+        final services = dioData.map((json) {
           if (json is LaundryService) {
             return json.copyWith(fromApi: true);
           } else {
@@ -117,48 +229,46 @@ class HomeController extends GetxController {
           }
         }).toList();
 
-        print("🔥 JUMLAH DATA DARI DIO API: ${dioServices.length}");
+        print("✅ DIO SUCCESS: ${services.length} services");
+        return services;
+      } else {
+        print("⚠️ DIO failed: ${dioResult['error']}");
+        return [];
       }
+    } catch (e) {
+      print("⚠️ DIO timeout/error: $e");
+      return [];
+    }
+  }
 
-      // 2. SUPABASE - tandai dengan fromApi: false (default)
-      print("🔥 CEK SUPABASE: MENGAMBIL DATA...");
+  // =========================
+  // FETCH FROM SUPABASE (WITH TIMEOUT)
+  // =========================
+  Future<List<LaundryService>> _fetchFromSupabase() async {
+    try {
+      print("🟢 Fetching from SUPABASE...");
+
       final supabaseList = await Supabase.instance.client
           .from('laundry_services')
-          .select();
+          .select()
+          .timeout(Duration(seconds: 8));
 
-      print("🔥 HASIL RAW SUPABASE:");
-      print(supabaseList);
+      if (supabaseList is List && supabaseList.isNotEmpty) {
+        final services = supabaseList
+            .map<LaundryService>(
+              (json) => LaundryService.fromJson(json, fromApi: false),
+            )
+            .toList();
 
-      if (supabaseList is! List) {
-        print("❌ ERROR: Supabase return bukan list");
+        print("✅ SUPABASE SUCCESS: ${services.length} services");
+        return services;
+      } else {
+        print("⚠️ SUPABASE returned empty list");
+        return [];
       }
-
-      if (supabaseList.isEmpty) {
-        print("⚠ WARNING: Supabase mengembalikan list KOSONG");
-      }
-
-      // Mapping data dari Supabase dengan fromApi = false (default)
-      final supabaseServices = supabaseList
-          .map<LaundryService>(
-            (json) => LaundryService.fromJson(json, fromApi: false),
-          )
-          .toList();
-
-      print("🔥 JUMLAH DATA DARI SUPABASE: ${supabaseServices.length}");
-
-      // 3. Gabung dua sumber
-      services.value = [...dioServices, ...supabaseServices];
-
-      print("🔥 TOTAL GABUNGAN SERVICES: ${services.length}");
-      print("🔥 DATA DARI API: ${services.where((s) => s.fromApi).length}");
-      print(
-        "🔥 DATA DARI SUPABASE: ${services.where((s) => !s.fromApi).length}",
-      );
     } catch (e) {
-      errorMessage.value = e.toString();
-      print("❌ FETCH ERROR: $e");
-    } finally {
-      isLoading.value = false;
+      print("⚠️ SUPABASE timeout/error: $e");
+      return [];
     }
   }
 
@@ -183,7 +293,7 @@ class HomeController extends GetxController {
   }
 
   // =========================
-  // CRUD SUPABASE (hanya untuk data Supabase)
+  // CRUD SUPABASE
   // =========================
 
   Future<bool> addService({
@@ -285,7 +395,6 @@ class HomeController extends GetxController {
       });
 
       await fetchServices();
-      Get.back();
 
       Get.snackbar(
         'Berhasil',
@@ -297,7 +406,6 @@ class HomeController extends GetxController {
       return true;
     } catch (e) {
       print("❌ Add Error: $e");
-      Get.back();
 
       Get.snackbar(
         'Error',
@@ -413,7 +521,6 @@ class HomeController extends GetxController {
           .eq('id', id);
 
       await fetchServices();
-      Get.back();
 
       Get.snackbar(
         'Berhasil',
@@ -425,7 +532,6 @@ class HomeController extends GetxController {
       return true;
     } catch (e) {
       print("❌ Update Error: $e");
-      Get.back();
       Get.snackbar(
         'Error',
         'Gagal mengupdate layanan: $e',
@@ -445,7 +551,6 @@ class HomeController extends GetxController {
           .eq('id', id);
 
       await fetchServices();
-      Get.back();
 
       Get.snackbar(
         'Berhasil',
@@ -457,7 +562,6 @@ class HomeController extends GetxController {
       return true;
     } catch (e) {
       print("❌ Delete Error: $e");
-      Get.back();
       Get.snackbar(
         'Error',
         'Gagal menghapus layanan: $e',

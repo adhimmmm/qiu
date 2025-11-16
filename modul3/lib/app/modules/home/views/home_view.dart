@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:intl/intl.dart';
 import '../controllers/home_controller.dart';
 import '../../../data/models/laundry_service_model.dart';
 import '../../../data/models/user_role.dart';
@@ -8,7 +9,6 @@ import '../../../routes/app_routes.dart';
 class HomeView extends GetView<HomeController> {
   const HomeView({super.key});
 
-  // Kategori data tetap konstan
   static const List<Map<String, dynamic>> _categories = [
     {'name': 'Laundry', 'icon': Icons.local_laundry_service},
     {'name': 'Setrika', 'icon': Icons.iron},
@@ -41,17 +41,49 @@ class HomeView extends GetView<HomeController> {
 
   Widget _buildBody(BuildContext context) {
     return Obx(() {
-      if (controller.isLoading.value) {
-        return Center(
-          child: CircularProgressIndicator(
-            color: Theme.of(context).primaryColor,
+      return RefreshIndicator(
+        onRefresh: controller.fetchServices,
+        color: Theme.of(context).primaryColor,
+        child: _buildMainContent(context),
+      );
+    });
+  }
+
+  Widget _buildMainContent(BuildContext context) {
+    return Obx(() {
+      // HANYA SHOW LOADING SAAT PERTAMA KALI & TIDAK ADA CACHE
+      if (controller.isLoading.value && controller.services.isEmpty) {
+        return SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildHeader(context),
+              const SizedBox(height: 20),
+              _buildSectionTitle('Service Categories'),
+              _buildCategories(),
+              const SizedBox(height: 20),
+              _buildSectionTitle('Popular Services'),
+              const SizedBox(height: 12),
+              // Loading indicator di tempat service cards
+              Container(
+                height: 180,
+                margin: const EdgeInsets.symmetric(horizontal: 20),
+                child: Center(
+                  child: CircularProgressIndicator(
+                    color: Theme.of(context).primaryColor,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 100),
+            ],
           ),
         );
       }
-      if (controller.errorMessage.value.isNotEmpty) {
-        return _buildErrorState();
-      }
+
+      // TAMPILAN NORMAL (ADA DATA ATAU KOSONG)
       return SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -142,7 +174,6 @@ class HomeView extends GetView<HomeController> {
                       size: 24,
                     ),
                     const SizedBox(width: 10),
-                    // TOGGLE DARK MODE
                     GestureDetector(
                       onTap: () => controller.toggleTheme(),
                       child: Obx(() {
@@ -391,12 +422,62 @@ class HomeView extends GetView<HomeController> {
   }
 
   Widget _buildServiceList(List<LaundryService> services) {
+    // EMPTY STATE - OFFLINE MODE
     if (services.isEmpty) {
-      return Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20),
-        child: Text(
-          'Tidak ada layanan yang tersedia.',
-          style: TextStyle(color: Get.theme.textTheme.bodyLarge?.color),
+      return Container(
+        height: 180,
+        margin: const EdgeInsets.symmetric(horizontal: 20),
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: Get.theme.cardColor,
+          borderRadius: BorderRadius.circular(15),
+          border: Border.all(
+            color: Get.theme.brightness == Brightness.dark
+                ? Colors.grey.shade800
+                : Colors.grey.shade200,
+          ),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.cloud_off_outlined,
+              size: 48,
+              color: Colors.orange.shade600,
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Tidak ada layanan',
+              style: TextStyle(
+                color: Get.theme.textTheme.bodyLarge?.color,
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Periksa koneksi internet Anda',
+              style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton.icon(
+              onPressed: controller.fetchServices,
+              icon: const Icon(Icons.refresh, size: 18),
+              label: const Text('Muat Ulang'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Theme.of(Get.context!).primaryColor,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 12,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+            ),
+          ],
         ),
       );
     }
@@ -433,7 +514,6 @@ class HomeView extends GetView<HomeController> {
             child: Stack(
               clipBehavior: Clip.none,
               children: [
-                // 🔷 CARD CONTENT
                 Padding(
                   padding: const EdgeInsets.all(12),
                   child: Column(
@@ -465,7 +545,7 @@ class HomeView extends GetView<HomeController> {
                       ),
                       const Spacer(),
                       Text(
-                        service.price,
+                        '${NumberFormat.currency(locale: 'id_ID', symbol: 'Rp. ', decimalDigits: 0).format(int.tryParse(service.price) ?? 0)}/kg',
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 16,
@@ -475,8 +555,6 @@ class HomeView extends GetView<HomeController> {
                     ],
                   ),
                 ),
-
-                // 🔴 BADGE DISKON (POJOK KANAN ATAS)
                 if (service.discount != null)
                   Positioned(
                     top: 10,
@@ -491,7 +569,7 @@ class HomeView extends GetView<HomeController> {
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Text(
-                        service.discount!,
+                        '${service.discount!}%',
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 10,
@@ -500,8 +578,6 @@ class HomeView extends GetView<HomeController> {
                       ),
                     ),
                   ),
-
-                // 💚 FAVORITE BUTTON (POJOK KANAN BAWAH)
                 Positioned(
                   bottom: 8,
                   right: 8,
@@ -517,8 +593,6 @@ class HomeView extends GetView<HomeController> {
                     );
                   }),
                 ),
-
-                // 🟦 LABEL API / DB (SEDIKIT DI ATAS FAVORITE)
                 Positioned(
                   bottom: 40,
                   left: 12,
@@ -543,18 +617,15 @@ class HomeView extends GetView<HomeController> {
                     ),
                   ),
                 ),
-
-                // 🟨 EDIT + DELETE (CENTER TOP)
                 if (controller.userRole.value == UserRole.admin &&
                     !service.fromApi)
                   Positioned(
-                    top: 5, // dinaikkan sedikit agar NEW floating style
+                    top: 5,
                     left: 0,
                     right: 0,
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        // EDIT
                         GestureDetector(
                           onTap: () => _showEditServiceDialog(context, service),
                           child: Container(
@@ -571,7 +642,6 @@ class HomeView extends GetView<HomeController> {
                             ),
                           ),
                         ),
-                        // DELETE
                         GestureDetector(
                           onTap: () => _showDeleteConfirm(context, service),
                           child: Container(
@@ -778,15 +848,12 @@ class HomeView extends GetView<HomeController> {
       cancelTextColor: Theme.of(context).primaryColor,
       buttonColor: Theme.of(context).primaryColor,
       onConfirm: () async {
-        final ok = await controller.addService(
+        await controller.addService(
           name: nameC.text.trim(),
           subtitle: subtitleC.text.trim(),
           price: priceC.text.trim(),
           discount: discountC.text.trim(),
         );
-        if (ok) {
-          Get.back();
-        }
       },
     );
   }
@@ -860,16 +927,13 @@ class HomeView extends GetView<HomeController> {
       cancelTextColor: Theme.of(context).primaryColor,
       buttonColor: Theme.of(context).primaryColor,
       onConfirm: () async {
-        final ok = await controller.updateService(
+        await controller.updateService(
           id: service.id,
           name: nameC.text.trim(),
           subtitle: subtitleC.text.trim(),
           price: priceC.text.trim(),
           discount: discountC.text.trim(),
         );
-        if (ok) {
-          Get.back();
-        }
       },
     );
   }
@@ -893,10 +957,7 @@ class HomeView extends GetView<HomeController> {
       cancelTextColor: Theme.of(context).primaryColor,
       buttonColor: Theme.of(context).primaryColor,
       onConfirm: () async {
-        final ok = await controller.deleteService(service.id);
-        if (ok) {
-          Get.back();
-        }
+        await controller.deleteService(service.id);
       },
       onCancel: () => Get.back(),
     );
