@@ -10,6 +10,8 @@ import '../modules/home/bindings/home_binding.dart';
 import '../modules/home/views/home_view.dart';
 import '../modules/login/bindings/login_binding.dart';
 import '../modules/login/views/login_view.dart';
+import '../modules/network_map/bindings/network_map_binding.dart';
+import '../modules/network_map/views/network_map_view.dart';
 import '../modules/profile/bindings/profile_binding.dart';
 import '../modules/profile/views/profile_view.dart';
 import 'app_routes.dart';
@@ -53,6 +55,11 @@ class AppPages {
       name: Routes.GPS_MAP,
       page: () => const GpsMapView(),
       binding: GpsMapBinding(),
+    ),
+    GetPage(
+      name: Routes.NETWORK_MAP,
+      page: () => const NetworkMapView(),
+      binding: NetworkMapBinding(),
     ),
   ];
 }
