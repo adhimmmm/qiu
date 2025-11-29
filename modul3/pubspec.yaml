@@ -1,5 +1,5 @@
 name: laundry_app
-description: "Laundry App with GetX - HTTP vs Dio Experiment"
+description: "Laundry App"
 publish_to: 'none'
 
 version: 1.0.0+1
@@ -22,12 +22,16 @@ dependencies:
   
   # Local Storage & Database 
   shared_preferences: ^2.2.3
-  hive: ^2.2.3         # <--- WAJIB ADA
-  hive_flutter: ^1.1.0 # <--- HARUS ADA
+  hive: ^2.2.3         
+  hive_flutter: ^1.1.0 
   supabase_flutter: ^2.5.5
   
   # UI
   cupertino_icons: ^1.0.8
+  geolocator: ^14.0.2
+  permission_handler: ^12.0.1
+  flutter_map: ^8.2.2
+  latlong2: ^0.9.1
 
 dev_dependencies:
   flutter_test:

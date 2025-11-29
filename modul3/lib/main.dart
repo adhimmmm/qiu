@@ -51,7 +51,7 @@ class LaundryApp extends StatelessWidget {
       title: 'Laundry App',
       debugShowCheckedModeBanner: false,
 
-      // Tema (tidak diubah!)
+      // Tema 
       theme: lightTheme(),
       darkTheme: darkTheme(),
       themeMode: Get.find<ThemeService>().themeMode,
