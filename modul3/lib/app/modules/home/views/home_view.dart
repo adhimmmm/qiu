@@ -633,8 +633,9 @@ class HomeView extends GetView<HomeController> {
                 return GestureDetector(
                   onTap: () {
                     controller.changeIndex(index);
-
-                    if (index == 3) {
+                    if(index == 1){
+                      Get.toNamed(Routes.BOOKING);
+                    } else if (index == 3) {
                       Get.toNamed(Routes.PROFILE);
                     } else if (index != 0) {
                       ScaffoldMessenger.of(context).showSnackBar(
