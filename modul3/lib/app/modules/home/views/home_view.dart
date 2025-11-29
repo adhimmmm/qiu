@@ -78,6 +78,35 @@ class HomeView extends GetView<HomeController> {
                 controller.services.toList().cast<LaundryService>(),
               );
             }),
+            const SizedBox(height: 24),
+
+            // ============ LOCATION MENU SECTION ============
+            _buildSectionTitle('Location Services'),
+            const SizedBox(height: 16),
+
+            // Network Location Card
+            _buildMenuCard(
+              context: context,
+              icon: Icons.network_cell,
+              title: 'Network Location',
+              subtitle: 'Lacak posisi menggunakan Network Provider',
+              color: Colors.blue,
+              onTap: controller.goToNetworkLocation,
+            ),
+
+            const SizedBox(height: 12),
+
+            // GPS Location Card
+            _buildMenuCard(
+              context: context,
+              icon: Icons.gps_fixed,
+              title: 'GPS Location',
+              subtitle: 'Lacak posisi menggunakan GPS',
+              color: Colors.green,
+              onTap: controller.goToGpsLocation,
+            ),
+
+            // ============ END LOCATION MENU SECTION ============
             const SizedBox(height: 100),
           ],
         ),
@@ -548,7 +577,7 @@ class HomeView extends GetView<HomeController> {
                 if (controller.userRole.value == UserRole.admin &&
                     !service.fromApi)
                   Positioned(
-                    top: 5, // dinaikkan sedikit agar NEW floating style
+                    top: 5,
                     left: 0,
                     right: 0,
                     child: Row(
@@ -595,6 +624,69 @@ class HomeView extends GetView<HomeController> {
             ),
           );
         },
+      ),
+    );
+  }
+
+  // ============ MENU CARD BUILDER ============
+  Widget _buildMenuCard({
+    required BuildContext context,
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    final theme = Theme.of(context);
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: Card(
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(12),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: color.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(icon, color: color, size: 32),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        subtitle,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Icon(
+                  Icons.arrow_forward_ios,
+                  size: 16,
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }

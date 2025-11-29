@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../../data/services/auth_service.dart';
+import '../../../routes/app_routes.dart';
 
 import '../../../data/models/laundry_service_model.dart';
 import '../../../data/services/dio_service.dart';
-import '../../../data/services/auth_service.dart';
 
 // FAVORIT
 import '../../../data/models/favorite_product_model.dart';
@@ -21,6 +22,21 @@ class HomeController extends GetxController {
   final DioService _dioService = DioService();
   final FavoriteService favoriteService = Get.find<FavoriteService>();
   final ThemeService _themeService = Get.find<ThemeService>();
+
+  // Navigate to location tracker (old combined view)
+  void goToLocation() {
+    Get.toNamed(Routes.LOCATION);
+  }
+
+  // Navigate to network location (network provider only)
+  void goToNetworkLocation() {
+    Get.toNamed(Routes.NETWORK_LOCATION);
+  }
+
+  // Navigate to GPS location (GPS only)
+  void goToGpsLocation() {
+    Get.toNamed(Routes.GPS_LOCATION);
+  }
 
   /// UI state
   final isLoading = false.obs;
@@ -128,7 +144,6 @@ class HomeController extends GetxController {
 
       print("🔥 HASIL RAW SUPABASE:");
       print(supabaseList);
-
 
       if (supabaseList.isEmpty) {
         print("⚠ WARNING: Supabase mengembalikan list KOSONG");

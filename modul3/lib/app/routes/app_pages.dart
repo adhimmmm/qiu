@@ -5,6 +5,12 @@ import '../modules/login/bindings/login_binding.dart';
 import '../modules/login/views/login_view.dart';
 import '../modules/favorites/bindings/favorites_binding.dart';
 import '../modules/favorites/views/favorites_view.dart';
+import '../modules/location/bindings/location_binding.dart';
+import '../modules/location/views/location_view.dart';
+import '../modules/location/bindings/network_location_binding.dart';
+import '../modules/location/views/network_location_view.dart';
+import '../modules/location/bindings/gps_location_binding.dart';
+import '../modules/location/views/gps_location_view.dart';
 
 // <-- IMPORT PROFILE MODULE (BARU)
 import '../modules/profile/bindings/profile_binding.dart';
@@ -39,6 +45,21 @@ class AppPages {
       name: Routes.PROFILE,
       page: () => const ProfileView(),
       binding: ProfileBinding(),
+    ),
+    GetPage(
+      name: Routes.LOCATION,
+      page: () => const LocationView(),
+      binding: LocationBinding(),
+    ),
+    GetPage(
+      name: Routes.NETWORK_LOCATION,
+      page: () => const NetworkLocationView(),
+      binding: NetworkLocationBinding(),
+    ),
+    GetPage(
+      name: Routes.GPS_LOCATION,
+      page: () => const GpsLocationView(),
+      binding: GpsLocationBinding(),
     ),
   ];
 }
