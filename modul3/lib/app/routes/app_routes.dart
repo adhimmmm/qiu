@@ -8,4 +8,5 @@ class Routes {
   static const NETWORK_PROVIDER = '/network-provider';
   static const BOOKING = '/booking';
   static const GPS_MAP = '/gps-map';
+  static const NETWORK_MAP = '/network-map';
 }
