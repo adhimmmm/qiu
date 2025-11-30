@@ -2,6 +2,9 @@ import 'package:get/get.dart';
 import '../../../routes/app_routes.dart';
 
 class BookingController extends GetxController {
+  final double storeLat = -7.927035;
+  final double storeLng = 112.593941;
+
   void goToGpsMap() {
     Get.toNamed(Routes.GPS_MAP);
   }
@@ -9,7 +12,6 @@ class BookingController extends GetxController {
   // Fungsi navigasi ke halaman Peta Jaringan
   void goToNetworkMap() {
     Get.toNamed(Routes.NETWORK_MAP);
-    
   }
 
   final count = 0.obs;
