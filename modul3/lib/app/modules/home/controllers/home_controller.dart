@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -128,9 +129,6 @@ class HomeController extends GetxController {
       print("🔥 HASIL RAW SUPABASE:");
       print(supabaseList);
 
-      if (supabaseList is! List) {
-        print("❌ ERROR: Supabase return bukan list");
-      }
 
       if (supabaseList.isEmpty) {
         print("⚠ WARNING: Supabase mengembalikan list KOSONG");
@@ -191,27 +189,119 @@ class HomeController extends GetxController {
     required String price,
     required String discount,
   }) async {
+    // Validasi input kosong
+    if (name.trim().isEmpty) {
+      Get.snackbar(
+        'Validasi Error',
+        'Nama layanan tidak boleh kosong',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.orange,
+        colorText: Colors.white,
+      );
+      return false;
+    }
+
+    if (subtitle.trim().isEmpty) {
+      Get.snackbar(
+        'Validasi Error',
+        'Subtitle tidak boleh kosong',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.orange,
+        colorText: Colors.white,
+      );
+      return false;
+    }
+
+    if (price.trim().isEmpty) {
+      Get.snackbar(
+        'Validasi Error',
+        'Harga tidak boleh kosong',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.orange,
+        colorText: Colors.white,
+      );
+      return false;
+    }
+
+    // Validasi harga harus berupa angka
+    final priceNumber = double.tryParse(price.trim());
+    if (priceNumber == null) {
+      Get.snackbar(
+        'Validasi Error',
+        'Harga harus berupa angka',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.orange,
+        colorText: Colors.white,
+      );
+      return false;
+    }
+
+    if (priceNumber <= 0) {
+      Get.snackbar(
+        'Validasi Error',
+        'Harga harus lebih besar dari 0',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.orange,
+        colorText: Colors.white,
+      );
+      return false;
+    }
+
+    // Validasi diskon harus berupa angka (jika diisi)
+    if (discount.trim().isNotEmpty) {
+      final discountNumber = double.tryParse(discount.trim());
+      if (discountNumber == null) {
+        Get.snackbar(
+          'Validasi Error',
+          'Diskon harus berupa angka',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.orange,
+          colorText: Colors.white,
+        );
+        return false;
+      }
+
+      if (discountNumber < 0) {
+        Get.snackbar(
+          'Validasi Error',
+          'Diskon tidak boleh negatif',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.orange,
+          colorText: Colors.white,
+        );
+        return false;
+      }
+    }
+
     try {
       await Supabase.instance.client.from('laundry_services').insert({
-        'name': name,
-        'subtitle': subtitle,
-        'price': price,
-        'discount': discount.isEmpty ? null : discount,
+        'name': name.trim(),
+        'subtitle': subtitle.trim(),
+        'price': price.trim(),
+        'discount': discount.trim().isEmpty ? null : discount.trim(),
       });
 
       await fetchServices();
+      Get.back();
+
       Get.snackbar(
         'Berhasil',
         'Layanan berhasil ditambahkan',
         snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.green,
+        colorText: Colors.white,
       );
       return true;
     } catch (e) {
       print("❌ Add Error: $e");
+      Get.back();
+
       Get.snackbar(
         'Error',
         'Gagal menambahkan layanan: $e',
         snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
       );
       return false;
     }
@@ -224,30 +314,121 @@ class HomeController extends GetxController {
     required String price,
     required String discount,
   }) async {
+    // Validasi input kosong
+    if (name.trim().isEmpty) {
+      Get.snackbar(
+        'Validasi Error',
+        'Nama layanan tidak boleh kosong',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.orange,
+        colorText: Colors.white,
+      );
+      return false;
+    }
+
+    if (subtitle.trim().isEmpty) {
+      Get.snackbar(
+        'Validasi Error',
+        'Subtitle tidak boleh kosong',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.orange,
+        colorText: Colors.white,
+      );
+      return false;
+    }
+
+    if (price.trim().isEmpty) {
+      Get.snackbar(
+        'Validasi Error',
+        'Harga tidak boleh kosong',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.orange,
+        colorText: Colors.white,
+      );
+      return false;
+    }
+
+    // Validasi harga harus berupa angka
+    final priceNumber = double.tryParse(price.trim());
+    if (priceNumber == null) {
+      Get.snackbar(
+        'Validasi Error',
+        'Harga harus berupa angka',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.orange,
+        colorText: Colors.white,
+      );
+      return false;
+    }
+
+    if (priceNumber <= 0) {
+      Get.snackbar(
+        'Validasi Error',
+        'Harga harus lebih besar dari 0',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.orange,
+        colorText: Colors.white,
+      );
+      return false;
+    }
+
+    // Validasi diskon harus berupa angka (jika diisi)
+    if (discount.trim().isNotEmpty) {
+      final discountNumber = double.tryParse(discount.trim());
+      if (discountNumber == null) {
+        Get.snackbar(
+          'Validasi Error',
+          'Diskon harus berupa angka',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.orange,
+          colorText: Colors.white,
+        );
+        return false;
+      }
+
+      if (discountNumber < 0) {
+        Get.snackbar(
+          'Validasi Error',
+          'Diskon tidak boleh negatif',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.orange,
+          colorText: Colors.white,
+        );
+        return false;
+      }
+    }
+
     try {
       await Supabase.instance.client
           .from('laundry_services')
           .update({
-            'name': name,
-            'subtitle': subtitle,
-            'price': price,
-            'discount': discount.isEmpty ? null : discount,
+            'name': name.trim(),
+            'subtitle': subtitle.trim(),
+            'price': price.trim(),
+            'discount': discount.trim().isEmpty ? null : discount.trim(),
           })
           .eq('id', id);
 
       await fetchServices();
+      Get.back();
+
       Get.snackbar(
         'Berhasil',
         'Layanan berhasil diupdate',
         snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.green,
+        colorText: Colors.white,
       );
       return true;
     } catch (e) {
       print("❌ Update Error: $e");
+      Get.back();
       Get.snackbar(
         'Error',
         'Gagal mengupdate layanan: $e',
         snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
       );
       return false;
     }
@@ -261,18 +442,25 @@ class HomeController extends GetxController {
           .eq('id', id);
 
       await fetchServices();
+      Get.back();
+
       Get.snackbar(
         'Berhasil',
         'Layanan berhasil dihapus',
         snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.green,
+        colorText: Colors.white,
       );
       return true;
     } catch (e) {
       print("❌ Delete Error: $e");
+      Get.back();
       Get.snackbar(
         'Error',
         'Gagal menghapus layanan: $e',
         snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
       );
       return false;
     }

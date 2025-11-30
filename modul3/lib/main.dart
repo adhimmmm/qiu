@@ -1,22 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+
 import 'app/routes/app_pages.dart';
 import 'app/data/services/auth_service.dart';
-
-// Import model dan service untuk fitur favorit
-import 'app/data/models/favorite_product_model.dart';
-import 'app/data/services/favorite_service.dart';
-
-// Import theme service untuk dark mode
 import 'app/data/services/theme_service.dart';
+import 'app/data/services/favorite_service.dart';
+import 'app/data/models/favorite_product_model.dart';
 
-// Fungsi untuk inisialisasi layanan asinkronus
 Future<void> initServices() async {
   // Inisialisasi Hive
   await Hive.initFlutter();
 
-  // Daftarkan adapter Hive
+  // Register adapter Hive
   Hive.registerAdapter(FavoriteProductModelAdapter());
 
   // Inisialisasi AuthService
@@ -25,24 +21,21 @@ Future<void> initServices() async {
   // Inisialisasi FavoriteService
   await Get.putAsync(() => FavoriteService().init());
 
-  // Inisialisasi ThemeService (Dark Mode)
+  // Inisialisasi ThemeService
   await Get.putAsync(() => ThemeService().init());
-
-  // Placeholder untuk inisialisasi Supabase
-  // await Supabase.initialize(url: 'YOUR_SUPABASE_URL', anonKey: 'YOUR_SUPABASE_ANON_KEY');
 }
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Inisialisasi semua layanan penting
+  // Inisialisasi semua services
   await initServices();
 
-  // Tentukan rute awal berdasarkan status autentikasi
-  final authService = Get.find<AuthService>();
-  final initialRoute = authService.isLoggedIn
-      ? AppPages.routes[0].name
-      : AppPages.initial;
+  // Tentukan initial route berdasarkan login Supabase
+  final auth = Get.find<AuthService>();
+  final initialRoute = auth.isLoggedIn
+      ? AppPages.routes[0].name // halaman home kamu
+      : AppPages.initial;       // halaman login
 
   runApp(LaundryApp(initialRoute: initialRoute));
 }
@@ -50,21 +43,32 @@ void main() async {
 class LaundryApp extends StatelessWidget {
   final String initialRoute;
 
-  const LaundryApp({Key? key, required this.initialRoute}) : super(key: key);
+  const LaundryApp({super.key, required this.initialRoute});
 
   @override
   Widget build(BuildContext context) {
     return GetMaterialApp(
       title: 'Laundry App',
       debugShowCheckedModeBanner: false,
-      
-      // Theme configuration
+
+      // Tema 
       theme: lightTheme(),
       darkTheme: darkTheme(),
       themeMode: Get.find<ThemeService>().themeMode,
-      
+
       initialRoute: initialRoute,
       getPages: AppPages.routes,
+
+      // FIX OVERLAY ERROR (SANGAT PENTING)
+      builder: (context, child) {
+        return Overlay(
+          initialEntries: [
+            OverlayEntry(
+              builder: (context) => child!,
+            ),
+          ],
+        );
+      },
     );
   }
 }
