@@ -9,4 +9,5 @@ class Routes {
   static const BOOKING = '/booking';
   static const GPS_MAP = '/gps-map';
   static const NETWORK_MAP = '/network-map';
+  static const PROMO = '/promo';
 }

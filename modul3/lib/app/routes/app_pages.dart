@@ -14,6 +14,8 @@ import '../modules/network_map/bindings/network_map_binding.dart';
 import '../modules/network_map/views/network_map_view.dart';
 import '../modules/profile/bindings/profile_binding.dart';
 import '../modules/profile/views/profile_view.dart';
+import '../modules/promo/bindings/promo_binding.dart';
+import '../modules/promo/views/promo_view.dart';
 import 'app_routes.dart';
 
 // <-- IMPORT PROFILE MODULE (BARU)
@@ -60,6 +62,11 @@ class AppPages {
       name: Routes.NETWORK_MAP,
       page: () => const NetworkMapView(),
       binding: NetworkMapBinding(),
+    ),
+    GetPage(
+      name: Routes.PROMO,
+      page: () => const PromoView(),
+      binding: PromoBinding(),
     ),
   ];
 }
