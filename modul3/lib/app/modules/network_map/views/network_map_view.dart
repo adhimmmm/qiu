@@ -33,11 +33,10 @@ class NetworkMapView extends GetView<NetworkMapController> {
         ],
       ),
 
-      // BODY ------------------------------------------------------------------
+    
       body: Obx(() {
         final data = controller.currentNetworkLocation.value;
 
-        /// CONDITION: FIRST LOAD
         if (controller.isLoading.value && data == null) {
           return const Center(
             child: Column(
@@ -51,7 +50,7 @@ class NetworkMapView extends GetView<NetworkMapController> {
           );
         }
 
-        /// PAGE CONTENT
+      
         return SingleChildScrollView(
           padding: const EdgeInsets.all(16),
           child: Column(
@@ -66,9 +65,7 @@ class NetworkMapView extends GetView<NetworkMapController> {
     );
   }
 
-  // ==========================================================================
-  // MAP WIDGET
-  // ==========================================================================
+
   Widget _buildMap(NetworkLocationData? data) {
     if (data == null) {
       return SizedBox(
@@ -122,9 +119,7 @@ class NetworkMapView extends GetView<NetworkMapController> {
     );
   }
 
-  // ==========================================================================
-  // DATA CARD
-  // ==========================================================================
+
   Widget _buildDataCard(BuildContext context, NetworkLocationData? d) {
     return Container(
       width: double.infinity,

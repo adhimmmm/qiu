@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:geolocator/geolocator.dart';
 
-// --- MODEL DATA LOKASI ---
 class LocationData {
   final double latitude;
   final double longitude;
@@ -25,25 +24,20 @@ class LocationData {
 
 class GpsMapController extends GetxController {
   
-  // Data Lokasi yang diobservasi
   final currentGpsLocation = Rxn<LocationData>();
   final isLoading = true.obs;
   
-  // Fitur Tracking - Toggle untuk mengikuti lokasi
   final isTrackingEnabled = true.obs;
-  
-  // Stream dan Pengaturan
+
   StreamSubscription<Position>? _gpsSubscription;
   final Duration _updateInterval = const Duration(seconds: 15);
   final String method = 'GPS (Akurasi Terbaik)';
-  
-  // Flag untuk mencegah multiple initialization
+   
   bool _isInitialized = false;
 
   @override
   void onInit() {
     super.onInit();
-    // Delay untuk memastikan widget sudah ready
     Future.delayed(const Duration(milliseconds: 500), () {
       if (!_isInitialized) {
         _isInitialized = true;
@@ -60,7 +54,6 @@ class GpsMapController extends GetxController {
     super.onClose();
   }
 
-  // Toggle tracking on/off
   void toggleTracking() {
     isTrackingEnabled.value = !isTrackingEnabled.value;
     
@@ -78,13 +71,12 @@ class GpsMapController extends GetxController {
   }
 
   Future<void> startLocationStream() async {
-    // Cegah multiple calls
     if (!_isInitialized) return;
     
     try {
       isLoading(true);
       
-      // Cancel subscription sebelumnya jika ada
+  
       await _gpsSubscription?.cancel();
       _gpsSubscription = null;
       
@@ -107,10 +99,10 @@ class GpsMapController extends GetxController {
       
       if (Platform.isAndroid) {
         locationSettings = AndroidSettings(
-          accuracy: LocationAccuracy.high, // Ubah ke high untuk stabilitas
-          distanceFilter: 5, // Ubah ke 5 meter untuk mencegah update terlalu sering
+          accuracy: LocationAccuracy.high,
+          distanceFilter: 5,
           intervalDuration: _updateInterval,
-          forceLocationManager: false, // Ubah ke false untuk stabilitas
+          forceLocationManager: false, 
         );
       } else if (Platform.isIOS || Platform.isMacOS) {
         locationSettings = AppleSettings(
@@ -126,7 +118,7 @@ class GpsMapController extends GetxController {
         );
       }
       
-      // Mulai streaming dengan error handling
+
       _gpsSubscription = Geolocator.getPositionStream(
         locationSettings: locationSettings, 
       ).listen(
@@ -148,7 +140,7 @@ class GpsMapController extends GetxController {
           );
           isLoading(false);
         },
-        cancelOnError: false, // Jangan cancel stream saat error
+        cancelOnError: false, 
       );
       
     } catch (e) {

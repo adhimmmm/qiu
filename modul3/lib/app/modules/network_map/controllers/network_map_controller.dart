@@ -23,19 +23,15 @@ class NetworkLocationData {
 }
 
 class NetworkMapController extends GetxController {
-  /// DATA REALTIME
+
   final currentNetworkLocation = Rxn<NetworkLocationData>();
 
-  /// LOADING STATE
   final isLoading = true.obs;
 
-  /// STREAM SUBSCRIPTION
   StreamSubscription<Position>? _networkSubscription;
 
-  /// UPDATE INTERVAL NETWORK PROVIDER
   final Duration _updateInterval = const Duration(seconds: 20);
 
-  /// METHOD IDENTIFIER
   final String method = 'Network Provider (Cell/WiFi)';
 
   @override
@@ -50,9 +46,6 @@ class NetworkMapController extends GetxController {
     super.onClose();
   }
 
-  // =======================================================================
-  // START STREAM (LIVE NETWORK LOCATION)
-  // =======================================================================
   Future<void> startNetworkLocationStream() async {
     isLoading(true);
 
@@ -61,7 +54,6 @@ class NetworkMapController extends GetxController {
       return;
     }
 
-    // Cancel jika ada stream sebelumnya
     _networkSubscription?.cancel();
 
     Get.snackbar(
@@ -77,7 +69,6 @@ class NetworkMapController extends GetxController {
       distanceFilter: 0,
     );
 
-    /// Platform specific
     if (Platform.isAndroid) {
       locationSettings = AndroidSettings(
         accuracy: LocationAccuracy.low,
@@ -92,7 +83,7 @@ class NetworkMapController extends GetxController {
       );
     }
 
-    /// LISTEN STREAM (REAL-TIME)
+    
     _networkSubscription = Geolocator.getPositionStream(
       locationSettings: locationSettings,
     ).listen(
@@ -108,9 +99,6 @@ class NetworkMapController extends GetxController {
     );
   }
 
-  // =======================================================================
-  // PERMISSION HANDLER
-  // =======================================================================
   Future<bool> _handleLocationPermission() async {
     bool enabled = await Geolocator.isLocationServiceEnabled();
     if (!enabled) {
@@ -141,9 +129,6 @@ class NetworkMapController extends GetxController {
     return true;
   }
 
-  // =======================================================================
-  // CONVERT MODEL
-  // =======================================================================
   NetworkLocationData _mapPositionToModel(Position pos) {
     return NetworkLocationData(
       latitude: pos.latitude,

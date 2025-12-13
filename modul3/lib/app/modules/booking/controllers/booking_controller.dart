@@ -9,7 +9,6 @@ class BookingController extends GetxController {
     Get.toNamed(Routes.GPS_MAP);
   }
 
-  // Fungsi navigasi ke halaman Peta Jaringan
   void goToNetworkMap() {
     Get.toNamed(Routes.NETWORK_MAP);
   }
