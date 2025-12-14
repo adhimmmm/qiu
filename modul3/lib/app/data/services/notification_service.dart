@@ -8,37 +8,83 @@ class NotificationService extends GetxService {
   final FlutterLocalNotificationsPlugin _localNotif =
       FlutterLocalNotificationsPlugin();
 
+
   /// ===============================
-  /// INIT SERVICE (DIPANGGIL DI main.dart)
+  /// INIT SERVICE
   /// ===============================
   Future<NotificationService> init() async {
     await _requestPermission();
     await _initLocalNotification();
-    await _printFcmToken();
-    log('🚀 NotificationService INIT START');
+    await _forceGenerateToken();
 
     _listenForegroundMessage();
-    _listenNotificationClick();
     _listenTokenRefresh();
-    log('✅ NotificationService INIT DONE');
+    setupClickHandler();
+
     return this;
   }
 
   /// ===============================
-  /// REQUEST PERMISSION (ANDROID 13+)
+  /// REQUEST PERMISSION
   /// ===============================
   Future<void> _requestPermission() async {
-    NotificationSettings settings = await _fcm.requestPermission(
+    final settings = await _fcm.requestPermission(
       alert: true,
       badge: true,
       sound: true,
     );
 
-    log('🔔 Notification permission: ${settings.authorizationStatus}');
+    print('🔔 PERMISSION STATUS: ${settings.authorizationStatus}');
   }
 
   /// ===============================
-  /// INIT LOCAL NOTIFICATION + CHANNEL
+  /// FORCE TOKEN GENERATION
+  /// ===============================
+  Future<void> _forceGenerateToken() async {
+    try {
+      await _fcm.deleteToken(); // 🔥 PAKSA BUAT TOKEN BARU
+      final token = await _fcm.getToken();
+
+      print('==============================');
+      print('🔥 FCM TOKEN RESULT');
+      print('TOKEN: $token');
+      print('==============================');
+
+      if (token == null) {
+        print('❌ TOKEN MASIH NULL');
+      }
+    } catch (e) {
+      print('❌ ERROR GET TOKEN: $e');
+    }
+  }
+
+  /// ===============================
+  /// TOKEN REFRESH
+  /// ===============================
+  void _listenTokenRefresh() {
+    _fcm.onTokenRefresh.listen((token) {
+      print('🔁 TOKEN REFRESHED: $token');
+    });
+  }
+
+
+/// ===============================
+/// BACKGROUND & TERMINATED CLICK
+/// ===============================
+void setupClickHandler() {
+  FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+    print('📲 CLICK FROM BACKGROUND: ${message.data}');
+  });
+
+  _fcm.getInitialMessage().then((message) {
+    if (message != null) {
+      print('🚀 CLICK FROM TERMINATED: ${message.data}');
+    }
+  });
+}
+
+  /// ===============================
+  /// LOCAL NOTIFICATION INIT
   /// ===============================
   Future<void> _initLocalNotification() async {
     const AndroidInitializationSettings androidInit =
@@ -47,90 +93,20 @@ class NotificationService extends GetxService {
     const InitializationSettings initSettings =
         InitializationSettings(android: androidInit);
 
-    await _localNotif.initialize(
-      initSettings,
-      onDidReceiveNotificationResponse: (response) {
-        if (response.payload != null) {
-          _handleNavigation(response.payload!);
-        }
-      },
-    );
-
-    /// 🔥 CHANNEL DENGAN CUSTOM SOUND
-    const AndroidNotificationChannel channel =
-        AndroidNotificationChannel(
-      'promo_channel', // ⚠️ JANGAN GANTI TANPA UNINSTALL
-      'Promo Notification',
-      description: 'Notifikasi promo laundry',
-      importance: Importance.max,
-      playSound: true,
-      sound: RawResourceAndroidNotificationSound('promo_sound'),
-    );
-
-    await _localNotif
-        .resolvePlatformSpecificImplementation<
-            AndroidFlutterLocalNotificationsPlugin>()
-        ?.createNotificationChannel(channel);
+    await _localNotif.initialize(initSettings);
   }
 
   /// ===============================
-  /// CETAK FCM TOKEN (WAJIB UNTUK MODUL)
-  /// ===============================
- Future<void> _printFcmToken() async {
-  final token = await _fcm.getToken();
-
-  if (token != null) {
-    log('🔥 FCM TOKEN (INITIAL): $token');
-  } else {
-    log('⏳ FCM TOKEN NULL, WAITING...');
-  }
-
-  /// 🔥 LISTENER PALING PENTING
-  FirebaseMessaging.instance.onTokenRefresh.listen((newToken) {
-    log('🔥 FCM TOKEN (REFRESH): $newToken');
-  });
-}
-
-
-  /// ===============================
-  /// TOKEN REFRESH LISTENER
-  /// ===============================
-  void _listenTokenRefresh() {
-    _fcm.onTokenRefresh.listen((newToken) {
-      log('🔁 FCM TOKEN REFRESHED: $newToken');
-    });
-  }
-
-  /// ===============================
-  /// FOREGROUND HANDLER
+  /// FOREGROUND MESSAGE
   /// ===============================
   void _listenForegroundMessage() {
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-      log('📩 Foreground Message Data: ${message.data}');
+      log('📩 FOREGROUND MESSAGE: ${message.data}');
 
       _showLocalNotification(
-        title: message.notification?.title ?? 'Promo Laundry',
-        body: message.notification?.body ??
-            'Ada promo menarik untuk kamu!',
-        payload: message.data['route'] ?? '/promo',
+        title: message.notification?.title ?? 'Promo',
+        body: message.notification?.body ?? 'Promo menarik untuk kamu',
       );
-    });
-  }
-
-  /// ===============================
-  /// BACKGROUND & TERMINATED CLICK
-  /// ===============================
-  void _listenNotificationClick() {
-    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-      log('📲 Notification Clicked (Background)');
-      _handleNavigation(message.data['route'] ?? '/promo');
-    });
-
-    _fcm.getInitialMessage().then((RemoteMessage? message) {
-      if (message != null) {
-        log('🚀 Notification Clicked (Terminated)');
-        _handleNavigation(message.data['route'] ?? '/promo');
-      }
     });
   }
 
@@ -140,39 +116,24 @@ class NotificationService extends GetxService {
   Future<void> _showLocalNotification({
     required String title,
     required String body,
-    required String payload,
   }) async {
     const AndroidNotificationDetails androidDetails =
         AndroidNotificationDetails(
-      'promo_channel', // HARUS SAMA
+      'promo_channel',
       'Promo Notification',
-      channelDescription: 'Notifikasi promo laundry',
+      channelDescription: 'Notifikasi promo',
       importance: Importance.max,
       priority: Priority.high,
-      playSound: true,
-      sound: RawResourceAndroidNotificationSound('promo_sound'),
     );
 
-    const NotificationDetails notificationDetails =
+    const NotificationDetails details =
         NotificationDetails(android: androidDetails);
 
     await _localNotif.show(
       DateTime.now().millisecondsSinceEpoch ~/ 1000,
       title,
       body,
-      notificationDetails,
-      payload: payload,
+      details,
     );
-  }
-
-  /// ===============================
-  /// NAVIGATION HANDLER
-  /// ===============================
-  void _handleNavigation(String route) {
-    if (route.isNotEmpty) {
-      Get.toNamed(route);
-    } else {
-      Get.toNamed('/promo');
-    }
   }
 }
