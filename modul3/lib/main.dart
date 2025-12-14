@@ -21,21 +21,21 @@ import 'app/data/services/notification_service.dart';
 import 'app/data/models/favorite_product_model.dart';
 
 /// =====================================================
-/// 🔔 NOTIFICATION GLOBAL CONFIG (WAJIB GLOBAL)
+/// 🔔 GLOBAL NOTIFICATION CHANNEL (ANDROID 8+)
 /// =====================================================
-
-const AndroidNotificationChannel channel = AndroidNotificationChannel(
-  'high_importance_channel', // HARUS sama dengan AndroidManifest.xml
-  'High Importance Notifications',
-  description: 'Channel untuk notifikasi penting',
-  importance: Importance.high,
-);
+const AndroidNotificationChannel highImportanceChannel =
+    AndroidNotificationChannel(
+      'promo_channel', // HARUS SAMA dengan NotificationService
+      'Promo Notification',
+      description: 'Notifikasi promo',
+      importance: Importance.max,
+    );
 
 final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
     FlutterLocalNotificationsPlugin();
 
 /// =====================================================
-/// 🔥 FCM BACKGROUND HANDLER (WAJIB ADA)
+/// 🔥 FCM BACKGROUND HANDLER (WAJIB)
 /// =====================================================
 @pragma('vm:entry-point')
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
@@ -59,37 +59,47 @@ Future<void> initServices() async {
   // THEME
   await Get.putAsync<ThemeService>(() => ThemeService().init());
 
-  // 🔔 NOTIFICATION SERVICE
+  // 🔔 NOTIFICATION (PALING AKHIR)
   await Get.putAsync<NotificationService>(() => NotificationService().init());
 }
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // 🔥 FIREBASE INIT
+  /// 🔥 FIREBASE INIT (WAJIB PALING AWAL)
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
-  // 🔔 REGISTER BACKGROUND HANDLER
+  /// 🔥 REGISTER BACKGROUND HANDLER
   FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
 
-  // 🔔 CREATE HIGH IMPORTANCE CHANNEL (INI KUNCI HEADS-UP)
+  /// 🔔 LOCAL NOTIFICATION INIT
+  const AndroidInitializationSettings androidInit =
+      AndroidInitializationSettings('@mipmap/ic_launcher');
+
+  const InitializationSettings initSettings = InitializationSettings(
+    android: androidInit,
+  );
+
+  await flutterLocalNotificationsPlugin.initialize(initSettings);
+
+  /// 🔔 CREATE NOTIFICATION CHANNEL (ANDROID 8+)
   await flutterLocalNotificationsPlugin
       .resolvePlatformSpecificImplementation<
         AndroidFlutterLocalNotificationsPlugin
       >()
-      ?.createNotificationChannel(channel);
+      ?.createNotificationChannel(highImportanceChannel);
 
-  // 🔔 REQUEST PERMISSION (ANDROID 13+)
+  /// 🔔 REQUEST PERMISSION (ANDROID 13+)
   await FirebaseMessaging.instance.requestPermission(
     alert: true,
     badge: true,
     sound: true,
   );
 
-  // INIT SERVICES
+  /// 🔥 INIT SERVICES
   await initServices();
 
-  // INITIAL ROUTE
+  /// 🔥 DETERMINE INITIAL ROUTE
   final auth = Get.find<AuthService>();
   final initialRoute = auth.isLoggedIn ? Routes.HOME : AppPages.initial;
 

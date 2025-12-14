@@ -3,11 +3,12 @@ import 'package:get/get.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
+import '../../routes/app_routes.dart';
+
 class NotificationService extends GetxService {
   final FirebaseMessaging _fcm = FirebaseMessaging.instance;
   final FlutterLocalNotificationsPlugin _localNotif =
       FlutterLocalNotificationsPlugin();
-
 
   /// ===============================
   /// INIT SERVICE
@@ -67,21 +68,20 @@ class NotificationService extends GetxService {
     });
   }
 
+  /// ===============================
+  /// BACKGROUND & TERMINATED CLICK
+  /// ===============================
+  void setupClickHandler() {
+    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+      print('📲 CLICK FROM BACKGROUND: ${message.data}');
+    });
 
-/// ===============================
-/// BACKGROUND & TERMINATED CLICK
-/// ===============================
-void setupClickHandler() {
-  FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-    print('📲 CLICK FROM BACKGROUND: ${message.data}');
-  });
-
-  _fcm.getInitialMessage().then((message) {
-    if (message != null) {
-      print('🚀 CLICK FROM TERMINATED: ${message.data}');
-    }
-  });
-}
+    _fcm.getInitialMessage().then((message) {
+      if (message != null) {
+        print('🚀 CLICK FROM TERMINATED: ${message.data}');
+      }
+    });
+  }
 
   /// ===============================
   /// LOCAL NOTIFICATION INIT
@@ -90,8 +90,9 @@ void setupClickHandler() {
     const AndroidInitializationSettings androidInit =
         AndroidInitializationSettings('@mipmap/ic_launcher');
 
-    const InitializationSettings initSettings =
-        InitializationSettings(android: androidInit);
+    const InitializationSettings initSettings = InitializationSettings(
+      android: androidInit,
+    );
 
     await _localNotif.initialize(initSettings);
   }
@@ -119,15 +120,16 @@ void setupClickHandler() {
   }) async {
     const AndroidNotificationDetails androidDetails =
         AndroidNotificationDetails(
-      'promo_channel',
-      'Promo Notification',
-      channelDescription: 'Notifikasi promo',
-      importance: Importance.max,
-      priority: Priority.high,
-    );
+          'promo_channel',
+          'Promo Notification',
+          channelDescription: 'Notifikasi promo',
+          importance: Importance.max,
+          priority: Priority.high,
+        );
 
-    const NotificationDetails details =
-        NotificationDetails(android: androidDetails);
+    const NotificationDetails details = NotificationDetails(
+      android: androidDetails,
+    );
 
     await _localNotif.show(
       DateTime.now().millisecondsSinceEpoch ~/ 1000,
@@ -135,5 +137,14 @@ void setupClickHandler() {
       body,
       details,
     );
+  }
+
+  /// ===============================
+  /// NAVIGATION
+  /// ===============================
+  void _goToPromo() {
+    if (Get.currentRoute != Routes.PROMO) {
+      Get.toNamed(Routes.PROMO);
+    }
   }
 }
