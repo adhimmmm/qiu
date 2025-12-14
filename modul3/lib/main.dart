@@ -21,11 +21,10 @@ import 'app/data/services/notification_service.dart';
 import 'app/data/models/favorite_product_model.dart';
 
 /// =====================================================
-/// 🔔 NOTIFICATION GLOBAL CONFIG (WAJIB GLOBAL)
+/// 🔔 NOTIFICATION GLOBAL CONFIG
 /// =====================================================
-
 const AndroidNotificationChannel channel = AndroidNotificationChannel(
-  'high_importance_channel', // HARUS sama dengan AndroidManifest.xml
+  'high_importance_channel',
   'High Importance Notifications',
   description: 'Channel untuk notifikasi penting',
   importance: Importance.high,
@@ -35,11 +34,12 @@ final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
     FlutterLocalNotificationsPlugin();
 
 /// =====================================================
-/// 🔥 FCM BACKGROUND HANDLER (WAJIB ADA)
+/// 🔥 FCM BACKGROUND HANDLER
 /// =====================================================
 @pragma('vm:entry-point')
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  print('🔔 Background message: ${message.notification?.title}');
 }
 
 /// =====================================================
@@ -66,35 +66,36 @@ Future<void> initServices() async {
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // 🔥 FIREBASE INIT
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-
-  // 🔔 REGISTER BACKGROUND HANDLER
   FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
 
-  // 🔔 CREATE HIGH IMPORTANCE CHANNEL (INI KUNCI HEADS-UP)
-  await flutterLocalNotificationsPlugin
-      .resolvePlatformSpecificImplementation<
-        AndroidFlutterLocalNotificationsPlugin
-      >()
-      ?.createNotificationChannel(channel);
+  await flutterLocalNotificationsPlugin.initialize(
+    InitializationSettings(
+      android: AndroidInitializationSettings('@mipmap/ic_launcher'),
+      iOS: DarwinInitializationSettings(),
+    ),
+    onDidReceiveNotificationResponse: (NotificationResponse response) {
+      print('📲 Local notification tapped');
+      Future.delayed(Duration(milliseconds: 300), () {
+        Get.offNamed(Routes.PROMO);
+      });
+    },
+  );
 
-  // 🔔 REQUEST PERMISSION (ANDROID 13+)
   await FirebaseMessaging.instance.requestPermission(
     alert: true,
     badge: true,
     sound: true,
   );
 
-  // INIT SERVICES
   await initServices();
 
-  // INITIAL ROUTE
   final auth = Get.find<AuthService>();
   final initialRoute = auth.isLoggedIn ? Routes.HOME : AppPages.initial;
 
   runApp(LaundryApp(initialRoute: initialRoute));
 }
+
 
 /// =====================================================
 /// APP ROOT
