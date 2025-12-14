@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 import 'firebase_options.dart';
 
@@ -17,6 +19,28 @@ import 'app/data/services/notification_service.dart';
 
 // MODELS
 import 'app/data/models/favorite_product_model.dart';
+
+/// =====================================================
+/// 🔔 NOTIFICATION GLOBAL CONFIG (WAJIB GLOBAL)
+/// =====================================================
+
+const AndroidNotificationChannel channel = AndroidNotificationChannel(
+  'high_importance_channel', // HARUS sama dengan AndroidManifest.xml
+  'High Importance Notifications',
+  description: 'Channel untuk notifikasi penting',
+  importance: Importance.high,
+);
+
+final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+    FlutterLocalNotificationsPlugin();
+
+/// =====================================================
+/// 🔥 FCM BACKGROUND HANDLER (WAJIB ADA)
+/// =====================================================
+@pragma('vm:entry-point')
+Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+}
 
 /// =====================================================
 /// INIT ALL SERVICES
@@ -35,18 +59,31 @@ Future<void> initServices() async {
   // THEME
   await Get.putAsync<ThemeService>(() => ThemeService().init());
 
-  // 🔔 NOTIFICATION (MODUL 6)
-  await Get.putAsync<NotificationService>(
-    () => NotificationService().init(),
-  );
+  // 🔔 NOTIFICATION SERVICE
+  await Get.putAsync<NotificationService>(() => NotificationService().init());
 }
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // 🔥 FIREBASE INIT (WAJIB SEBELUM FCM)
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
+  // 🔥 FIREBASE INIT
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
+  // 🔔 REGISTER BACKGROUND HANDLER
+  FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+
+  // 🔔 CREATE HIGH IMPORTANCE CHANNEL (INI KUNCI HEADS-UP)
+  await flutterLocalNotificationsPlugin
+      .resolvePlatformSpecificImplementation<
+        AndroidFlutterLocalNotificationsPlugin
+      >()
+      ?.createNotificationChannel(channel);
+
+  // 🔔 REQUEST PERMISSION (ANDROID 13+)
+  await FirebaseMessaging.instance.requestPermission(
+    alert: true,
+    badge: true,
+    sound: true,
   );
 
   // INIT SERVICES
@@ -54,8 +91,7 @@ void main() async {
 
   // INITIAL ROUTE
   final auth = Get.find<AuthService>();
-  final initialRoute =
-      auth.isLoggedIn ? Routes.HOME : AppPages.initial;
+  final initialRoute = auth.isLoggedIn ? Routes.HOME : AppPages.initial;
 
   runApp(LaundryApp(initialRoute: initialRoute));
 }
@@ -66,10 +102,7 @@ void main() async {
 class LaundryApp extends StatelessWidget {
   final String initialRoute;
 
-  const LaundryApp({
-    super.key,
-    required this.initialRoute,
-  });
+  const LaundryApp({super.key, required this.initialRoute});
 
   @override
   Widget build(BuildContext context) {
@@ -88,11 +121,7 @@ class LaundryApp extends StatelessWidget {
 
       // FIX OVERLAY ERROR
       builder: (context, child) {
-        return Overlay(
-          initialEntries: [
-            OverlayEntry(builder: (_) => child!),
-          ],
-        );
+        return Overlay(initialEntries: [OverlayEntry(builder: (_) => child!)]);
       },
     );
   }
